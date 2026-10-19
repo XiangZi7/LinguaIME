@@ -1,0 +1,2 @@
+<script setup lang="ts">defineProps<{ title?: string; description?: string }>()</script>
+<template><section class="overflow-hidden rounded-xl border border-line bg-surface"><header v-if="title || $slots.actions" class="flex items-center justify-between gap-4 border-b border-line px-5 py-4"><div><h2 class="text-sm font-semibold text-ink">{{ title }}</h2><p v-if="description" class="mt-1 text-xs text-muted">{{ description }}</p></div><slot name="actions" /></header><slot /></section></template>

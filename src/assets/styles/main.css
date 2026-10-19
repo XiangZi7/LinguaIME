@@ -2,6 +2,118 @@
 @import '@fontsource/inter/latin-500.css';
 @import '@fontsource/inter/latin-600.css';
 @import '@fontsource/inter/latin-700.css';
-@import '@fontsource/inter/latin-800.css';
-@import '@fontsource/inter/latin-900.css';
 @import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  font-family: Inter, 'Segoe UI Variable', 'Microsoft YaHei UI', sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  --surface: #ffffff;
+  --canvas: #f7f8fa;
+  --sidebar: #fcfcfb;
+  --subtle: #f2f4f4;
+  --ink: #252c2a;
+  --muted: #6c7772;
+  --faint: #87918c;
+  --line: #e6eae7;
+  --accent: #477553;
+  --accent-hover: #3a6445;
+  --accent-soft: #eaf1e9;
+  --accent-wash: #f1f5ee;
+  --translation: #a85525;
+  --candidate-selected: #dcebc8;
+  --candidate-text: #273321;
+  --warning: #936523;
+  --warning-soft: #faf2e3;
+  --danger: #bd4545;
+  --danger-soft: #fceeee;
+  --blue-soft: #eaf0fa;
+  --blue-ink: #4b6c9a;
+  --switch-off: #cdd4d0;
+  color-scheme: light;
+  color: var(--ink);
+  background: var(--canvas);
+}
+.dark {
+  --surface: #202522;
+  --canvas: #191d1b;
+  --sidebar: #1c211e;
+  --subtle: #2a302c;
+  --ink: #edf1ec;
+  --muted: #acb7ae;
+  --faint: #929f95;
+  --line: #343d36;
+  --accent: #a8c59c;
+  --accent-hover: #bfdbb4;
+  --accent-soft: #303e31;
+  --accent-wash: #252f26;
+  --translation: #f3a16d;
+  --candidate-selected: #394936;
+  --candidate-text: #f5f8f2;
+  --warning: #e1bc73;
+  --warning-soft: #3b3324;
+  --danger: #ee9696;
+  --danger-soft: #442d2d;
+  --blue-soft: #2c394d;
+  --blue-ink: #b2c8ed;
+  --switch-off: #536057;
+  color-scheme: dark;
+}
+[data-accent='blue'] {
+  --candidate-selected: #deebfc;
+  --candidate-text: #233e62;
+}
+.dark [data-accent='blue'] { --candidate-selected: #2d405c; --candidate-text: #f0f5ff; }
+
+@theme inline {
+  --color-surface: var(--surface);
+  --color-canvas: var(--canvas);
+  --color-sidebar: var(--sidebar);
+  --color-subtle: var(--subtle);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-wash: var(--accent-wash);
+  --color-translation: var(--translation);
+  --color-candidate-selected: var(--candidate-selected);
+  --color-candidate-text: var(--candidate-text);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-blue-soft: var(--blue-soft);
+  --color-blue-ink: var(--blue-ink);
+  --color-switch-off: var(--switch-off);
+}
+
+@layer base {
+  body { margin: 0; min-width: 360px; }
+  button, input, select, textarea { font: inherit; }
+  button, a, input, select, textarea, [tabindex] { outline-offset: 4px; }
+  :focus-visible { outline: 2px solid var(--accent); }
+  ::selection { background: var(--candidate-selected); color: var(--candidate-text); }
+  button:disabled { cursor: not-allowed; }
+  a { text-decoration: none; }
+  dialog::backdrop { backdrop-filter: blur(3px); }
+}
+@layer components {
+  .ui-button { @apply inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg border font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50; }
+  .ui-button--primary { @apply border-transparent bg-accent text-surface hover:bg-accent-hover; }
+  .ui-button--secondary { @apply border-line bg-surface text-ink hover:bg-subtle; }
+  .ui-button--ghost { @apply border-transparent bg-transparent text-muted hover:bg-subtle hover:text-ink; }
+  .ui-button--danger { @apply border-danger/20 bg-danger-soft text-danger hover:bg-danger/15; }
+  .field { @apply min-h-10 rounded-lg border border-line bg-surface px-3 text-[13px] text-ink placeholder:text-faint focus:border-accent; }
+  .field-label { @apply mb-2 block text-xs font-medium text-ink; }
+  .text-link { @apply inline-flex cursor-pointer items-center gap-1.5 text-xs font-medium text-accent hover:underline; }
+  .keycap { @apply inline-flex min-h-6 min-w-6 items-center justify-center rounded border border-line bg-surface px-1.5 text-[10px] leading-none font-medium text-muted shadow-[0_1px_0_var(--line)]; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}

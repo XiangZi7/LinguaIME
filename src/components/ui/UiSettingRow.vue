@@ -1,0 +1,2 @@
+<script setup lang="ts">defineProps<{ title: string; description?: string }>()</script>
+<template><div class="flex min-h-[82px] flex-wrap items-center justify-between gap-x-6 gap-y-2 border-b border-line px-5 py-4 last:border-b-0"><div class="min-w-0 flex-1"><h3 class="text-[13px] font-medium text-ink">{{ title }}</h3><p v-if="description" class="mt-1.5 max-w-xl text-xs leading-relaxed text-muted">{{ description }}</p></div><div class="shrink-0"><slot /></div></div></template>

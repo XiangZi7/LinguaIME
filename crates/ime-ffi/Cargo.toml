@@ -1,0 +1,16 @@
+[package]
+name = "ime-ffi"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+ime-core.workspace = true
+ime-types.workspace = true
+ime-storage.workspace = true
+
+[lints]
+workspace = true

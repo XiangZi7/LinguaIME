@@ -1,33 +1,58 @@
-# Nuxt dev/build outputs
-.output
-.data
-.nuxt
-.nitro
-.cache
-.wrangler
-dist
-
-# Node dependencies
-node_modules
-
 # Logs
+target/
+build/
 logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# Misc
-.DS_Store
-.fleet
-.idea
+node_modules
+.pnpm-store/
+dist
+dist-ssr
+*.local
+.tauri/
+release-output/
 
-# Local env files
+output/
+
+# pdf.js 运行时资源：由 scripts/sync-pdfjs-assets.mjs 从 node_modules 复制（约 4MB 第三方产物）
+public/pdfjs/
+
+# 代理特权服务的编译产物：由 scripts/build-proxy-service.mjs 从 cargo target 复制
+src-tauri/resources/
+
+# Local environment configuration (keep shareable templates)
 .env
 .env.*
 !.env.example
+!.env.sample
+!.env.template
 !.env.*.example
-.dev.vars
-.dev.vars.*
-!.dev.vars.example
+!.env.*.sample
+!.env.*.template
 
-.shots
-.pnpm-store
-src-tauri/target
+# Compiler caches and generated test reports
+*.tsbuildinfo
+/coverage/
+/test-results/
+/playwright-report/
+
+# Machine-specific AI tool preferences; shared rules/commands remain versioned
+.claude/settings.local.json
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+
