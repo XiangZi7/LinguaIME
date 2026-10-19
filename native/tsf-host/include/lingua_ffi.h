@@ -22,6 +22,7 @@ static_assert(sizeof(LinguaConfig) == 40);
 
 extern "C" {
 __declspec(dllimport) uint32_t lingua_abi_version();
+__declspec(dllimport) void lingua_release_cache();
 __declspec(dllimport) EngineContext* lingua_create();
 __declspec(dllimport) void lingua_destroy(EngineContext*);
 __declspec(dllimport) int32_t lingua_refresh(EngineContext*, LinguaConfig*);

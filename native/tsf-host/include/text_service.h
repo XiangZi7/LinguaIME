@@ -2,11 +2,12 @@
 #include "candidate_window.h"
 #include "key_policy.h"
 #include "language_bar.h"
+#include "runtime_contract.h"
 #include <array>
 
 class TextService final : public ITfTextInputProcessorEx, public ITfKeyEventSink,
                           public ITfThreadMgrEventSink, public ITfCompositionSink,
-                          public ITfCompartmentEventSink {
+                          public ITfCompartmentEventSink, public ILinguaRuntimeControl {
 public:
     TextService();
     ~TextService();
@@ -29,6 +30,8 @@ public:
     HRESULT STDMETHODCALLTYPE OnPopContext(ITfContext*) override;
     HRESULT STDMETHODCALLTYPE OnCompositionTerminated(TfEditCookie, ITfComposition*) override;
     HRESULT STDMETHODCALLTYPE OnChange(REFGUID) override;
+    HRESULT STDMETHODCALLTYPE GetState(RuntimeState*) override;
+    HRESULT STDMETHODCALLTYPE RestoreMode(BOOL) override;
     HRESULT edit(TfEditCookie, ITfContext*, const std::wstring&, bool commit, bool cancel);
 #ifdef LINGUA_TESTING
     // The harness uses a real TSF context without claiming to be the OS-activated keyboard TIP.
@@ -41,6 +44,7 @@ public:
     ITfLangBarItemButton* language_bar_for_test() { return language_bar_button_.Get(); }
 #endif
 private:
+    friend class EditSession;
     HRESULT initialize_language_bar();
     void uninitialize_language_bar();
     HRESULT set_input_mode(bool chinese);
@@ -68,6 +72,7 @@ private:
     ComPtr<LanguageBarButton> language_bar_button_;
     bool chinese_mode_ = true;
     bool publishing_mode_ = false;
+    unsigned pending_edits_ = 0;
     EngineContext* engine_ = nullptr;
     LinguaConfig config_{7,1,0,0,17,0,1,0,0xBD,0xBB};
     LinguaPage page_{};

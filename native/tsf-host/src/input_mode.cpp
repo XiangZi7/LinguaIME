@@ -103,6 +103,7 @@ HRESULT TextService::set_input_mode(bool chinese) {
 }
 
 HRESULT TextService::OnChange(REFGUID id) {
+    RuntimeCall call;
     if (publishing_mode_) return S_OK;
     try {
         for (size_t i = 0; i < mode_compartments_.size(); ++i) {
@@ -123,6 +124,24 @@ HRESULT TextService::OnChange(REFGUID id) {
             return result;
         }
         return S_OK;
+    } catch (...) {
+        return E_FAIL;
+    }
+}
+
+HRESULT TextService::GetState(RuntimeState* state) {
+    if (!state) return E_POINTER;
+    *state = {kRuntimeAbi,
+        buffer_.empty() && !composition_ && pending_edits_ == 0 && g_runtime_callback_depth == 0,
+        chinese_mode_};
+    return S_OK;
+}
+
+HRESULT TextService::RestoreMode(BOOL chinese) {
+    RuntimeCall call;
+    if (!buffer_.empty() || composition_ || pending_edits_) return E_PENDING;
+    try {
+        return set_input_mode(chinese != FALSE);
     } catch (...) {
         return E_FAIL;
     }

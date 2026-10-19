@@ -6,12 +6,11 @@
 #include <initguid.h>
 #include <inputscope.h>
 
-namespace {
 class EditSession final : public ITfEditSession {
 public:
     EditSession(TextService* service, ITfContext* context, std::wstring text, bool commit, bool cancel, ITfComposition* cancelling)
-        : service_(service), context_(context), text_(std::move(text)), commit_(commit), cancel_(cancel), cancelling_(cancelling) { service_->AddRef(); ++g_objects; }
-    ~EditSession() { service_->Release(); --g_objects; }
+        : service_(service), context_(context), text_(std::move(text)), commit_(commit), cancel_(cancel), cancelling_(cancelling) { service_->AddRef(); ++service_->pending_edits_; ++g_objects; }
+    ~EditSession() { --service_->pending_edits_; service_->Release(); --g_objects; }
     HRESULT STDMETHODCALLTYPE QueryInterface(REFIID id, void** output) override {
         if (!output) return E_POINTER;
         *output = nullptr;
@@ -21,6 +20,7 @@ public:
     ULONG STDMETHODCALLTYPE AddRef() override { return ++references_; }
     ULONG STDMETHODCALLTYPE Release() override { const auto n=--references_; if (!n) delete this; return n; }
     HRESULT STDMETHODCALLTYPE DoEditSession(TfEditCookie cookie) override {
+        RuntimeCall call;
         try {
             if (cancel_ && cancelling_) {
                 ComPtr<ITfRange> range;
@@ -41,6 +41,7 @@ private:
     bool commit_, cancel_;
     ComPtr<ITfComposition> cancelling_;
 };
+namespace {
 bool system_modifier_pressed() { return (GetKeyState(VK_CONTROL)&0x8000) || (GetKeyState(VK_MENU)&0x8000) ||
                                   (GetKeyState(VK_LWIN)&0x8000) || (GetKeyState(VK_RWIN)&0x8000); }
 bool modifier_pressed() { return system_modifier_pressed() || (GetKeyState(VK_SHIFT)&0x8000); }
@@ -80,11 +81,13 @@ HRESULT TextService::QueryInterface(REFIID id, void** output) {
     else if (id==IID_ITfThreadMgrEventSink) *output=static_cast<ITfThreadMgrEventSink*>(this);
     else if (id==IID_ITfCompositionSink) *output=static_cast<ITfCompositionSink*>(this);
     else if (id==IID_ITfCompartmentEventSink) *output=static_cast<ITfCompartmentEventSink*>(this);
+    else if (id==__uuidof(ILinguaRuntimeControl)) *output=static_cast<ILinguaRuntimeControl*>(this);
     else return E_NOINTERFACE;
     AddRef(); return S_OK;
 }
 HRESULT TextService::Activate(ITfThreadMgr* manager, TfClientId id) { return ActivateEx(manager,id,0); }
 HRESULT TextService::ActivateEx(ITfThreadMgr* manager, TfClientId id, DWORD flags) {
+    RuntimeCall call;
     // Secure desktops are not supported; allow Windows to retain its normal input path.
     if (!manager || (flags & TF_TMAE_SECUREMODE)) return E_FAIL;
     try {
@@ -105,6 +108,7 @@ HRESULT TextService::ActivateEx(ITfThreadMgr* manager, TfClientId id, DWORD flag
     } catch (...) { Deactivate(); return E_FAIL; }
 }
 HRESULT TextService::Deactivate() {
+    RuntimeCall call;
     uninitialize_language_bar();
     window_.hide();
     if (context_ && composition_) request_edit(context_.Get(),L"",false,true);
@@ -146,12 +150,13 @@ bool TextService::handles(ITfContext* context, WPARAM key) const {
     const bool punctuation=config_.chinese_punctuation && !system_modifier_pressed() && lingua::punctuation(static_cast<uint32_t>(key),(GetKeyState(VK_SHIFT)&0x8000)!=0);
     return chinese_mode_ && engine_ && context_available(context) && (punctuation || lingua::handles_key(static_cast<uint32_t>(key),!buffer_.empty(),modifier_pressed(),config_.previous_key,config_.next_key));
 }
-HRESULT TextService::OnTestKeyDown(ITfContext* context, WPARAM key, LPARAM, BOOL* eaten) { if (!eaten) return E_POINTER; *eaten=handles(context,key); return S_OK; }
+HRESULT TextService::OnTestKeyDown(ITfContext* context, WPARAM key, LPARAM, BOOL* eaten) { RuntimeCall call; if (!eaten) return E_POINTER; *eaten=handles(context,key); return S_OK; }
 HRESULT TextService::OnTestKeyUp(ITfContext*, WPARAM, LPARAM, BOOL* eaten) { if (!eaten) return E_POINTER; *eaten=FALSE; return S_OK; }
 HRESULT TextService::OnKeyUp(ITfContext*, WPARAM, LPARAM, BOOL* eaten) { if (!eaten) return E_POINTER; *eaten=FALSE; return S_OK; }
 HRESULT TextService::OnPreservedKey(ITfContext*, REFGUID, BOOL* eaten) { if (!eaten) return E_POINTER; *eaten=FALSE; return S_OK; }
 
 HRESULT TextService::OnKeyDown(ITfContext* context, WPARAM key, LPARAM, BOOL* eaten) {
+    RuntimeCall call;
     if (!eaten) return E_POINTER;
     *eaten=FALSE;
     try {
@@ -218,12 +223,13 @@ HRESULT TextService::choose(unsigned index) {
 }
 void TextService::clear_state() { buffer_.clear(); page_={}; selected_=0; composition_.Reset(); context_.Reset(); window_.hide(); }
 void TextService::cancel() { if (context_) request_edit(context_.Get(),L"",false,true); clear_state(); }
-HRESULT TextService::OnSetFocus(BOOL foreground) { if (!foreground) cancel(); return S_OK; }
-HRESULT TextService::OnSetFocus(ITfDocumentMgr*, ITfDocumentMgr*) { cancel(); return S_OK; }
-HRESULT TextService::OnUninitDocumentMgr(ITfDocumentMgr*) { cancel(); return S_OK; }
-HRESULT TextService::OnPushContext(ITfContext*) { cancel(); return S_OK; }
-HRESULT TextService::OnPopContext(ITfContext*) { cancel(); return S_OK; }
+HRESULT TextService::OnSetFocus(BOOL foreground) { RuntimeCall call; if (!foreground) cancel(); return S_OK; }
+HRESULT TextService::OnSetFocus(ITfDocumentMgr*, ITfDocumentMgr*) { RuntimeCall call; cancel(); return S_OK; }
+HRESULT TextService::OnUninitDocumentMgr(ITfDocumentMgr*) { RuntimeCall call; cancel(); return S_OK; }
+HRESULT TextService::OnPushContext(ITfContext*) { RuntimeCall call; cancel(); return S_OK; }
+HRESULT TextService::OnPopContext(ITfContext*) { RuntimeCall call; cancel(); return S_OK; }
 HRESULT TextService::OnCompositionTerminated(TfEditCookie cookie, ITfComposition* composition) {
+    RuntimeCall call;
     if (composition_.Get()==composition) {
         ComPtr<ITfRange> range;
         if (SUCCEEDED(composition->GetRange(&range))) range->SetText(cookie,0,L"",0);

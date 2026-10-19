@@ -1,4 +1,5 @@
 #include "candidate_window.h"
+#include "runtime_contract.h"
 #include <algorithm>
 #include <dwmapi.h>
 

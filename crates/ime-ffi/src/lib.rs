@@ -10,9 +10,21 @@ use std::{
     collections::HashMap,
     ffi::{CStr, c_char},
     panic::{AssertUnwindSafe, catch_unwind},
-    sync::{Arc, OnceLock},
+    sync::{Arc, Mutex, OnceLock},
 };
 use types::copy_utf8;
+
+static ENGINE_CACHE: OnceLock<Mutex<Option<Arc<PinyinEngine>>>> = OnceLock::new();
+
+fn shared_engine() -> Arc<PinyinEngine> {
+    let mut cache = ENGINE_CACHE
+        .get_or_init(|| Mutex::new(None))
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    cache
+        .get_or_insert_with(|| Arc::new(PinyinEngine::default()))
+        .clone()
+}
 
 pub struct EngineContext {
     engine: Arc<PinyinEngine>,
@@ -31,15 +43,26 @@ pub extern "C" fn lingua_abi_version() -> u32 {
     1
 }
 
+/// Release the optional shared cache before a runtime generation is unloaded.
+/// Existing contexts retain their own Arc; calls are serialized with cache creation.
+#[unsafe(no_mangle)]
+pub extern "C" fn lingua_release_cache() {
+    let _ = catch_unwind(|| {
+        if let Some(cache) = ENGINE_CACHE.get() {
+            cache
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .take();
+        }
+    });
+}
+
 #[unsafe(no_mangle)]
 pub extern "C" fn lingua_create() -> *mut EngineContext {
     catch_unwind(|| {
-        static ENGINE: OnceLock<Arc<PinyinEngine>> = OnceLock::new();
         let storage = Storage::open(&default_data_path()).ok();
         let mut context = Box::new(EngineContext {
-            engine: ENGINE
-                .get_or_init(|| Arc::new(PinyinEngine::default()))
-                .clone(),
+            engine: shared_engine(),
             storage,
             settings: Settings::default(),
             phrases: Vec::new(),

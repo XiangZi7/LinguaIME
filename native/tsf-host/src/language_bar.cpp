@@ -1,4 +1,5 @@
 #include "language_bar.h"
+#include "runtime_contract.h"
 #include <algorithm>
 #include <utility>
 
@@ -101,6 +102,7 @@ HRESULT LanguageBarButton::GetTooltipString(BSTR* text) {
 }
 
 HRESULT LanguageBarButton::OnClick(TfLBIClick click, POINT, const RECT*) {
+    RuntimeCall call;
     if (click != TF_LBI_CLK_LEFT || (status_ & TF_LBI_STATUS_DISABLED)) return S_OK;
     try {
         const auto toggle = toggle_;

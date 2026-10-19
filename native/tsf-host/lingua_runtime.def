@@ -1,0 +1,6 @@
+LIBRARY lingua_runtime
+EXPORTS
+    DllCanUnloadNow PRIVATE
+    DllGetClassObject PRIVATE
+    LinguaRuntimeAbiVersion PRIVATE
+    LinguaRuntimePrepareUnload PRIVATE
