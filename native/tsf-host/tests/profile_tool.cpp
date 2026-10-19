@@ -1,5 +1,53 @@
 #include "common.h"
+#include <ctfutb.h>
+#include <ctffunc.h>
 #include <iostream>
+
+namespace {
+HRESULT verify_mode(ITfThreadMgr* threads, ITfLangBarItemButton* button, bool chinese) {
+    BSTR text=nullptr;
+    auto result=button->GetText(&text);
+    const bool matches=SUCCEEDED(result) && text && wcscmp(text,chinese?L"中":L"英")==0;
+    SysFreeString(text);
+    if (!matches) return FAILED(result)?result:E_FAIL;
+    ComPtr<ITfCompartmentMgr> compartments;
+    result=threads->QueryInterface(IID_PPV_ARGS(&compartments));
+    if (FAILED(result)) return result;
+    for (const GUID* guid : {&GUID_COMPARTMENT_KEYBOARD_OPENCLOSE,
+                             &GUID_COMPARTMENT_KEYBOARD_INPUTMODE_CONVERSION}) {
+        ComPtr<ITfCompartment> compartment;
+        result=compartments->GetCompartment(*guid,&compartment);
+        VARIANT value{};
+        if (SUCCEEDED(result)) result=compartment->GetValue(&value);
+        const bool valid=SUCCEEDED(result) && value.vt==VT_I4 &&
+            value.lVal==(chinese?1:0);
+        VariantClear(&value);
+        if (!valid) return FAILED(result)?result:E_FAIL;
+    }
+    return S_OK;
+}
+
+HRESULT probe_language_bar(ITfThreadMgr* threads) {
+    ComPtr<ITfLangBarItemMgr> manager;
+    auto result=threads->QueryInterface(IID_PPV_ARGS(&manager));
+    ComPtr<ITfLangBarItem> item;
+    if (SUCCEEDED(result)) result=manager->GetItem(GUID_LBI_INPUTMODE,&item);
+    TF_LANGBARITEMINFO info{};
+    if (SUCCEEDED(result)) result=item->GetInfo(&info);
+    if (SUCCEEDED(result) && (info.clsidService!=kClsid ||
+        !(info.dwStyle & TF_LBI_STYLE_SHOWNINTRAY))) result=E_FAIL;
+    ComPtr<ITfLangBarItemButton> button;
+    if (SUCCEEDED(result)) result=item.As(&button);
+    if (SUCCEEDED(result)) result=verify_mode(threads,button.Get(),true);
+    if (SUCCEEDED(result)) result=button->OnClick(TF_LBI_CLK_LEFT,POINT{},nullptr);
+    if (SUCCEEDED(result)) result=verify_mode(threads,button.Get(),false);
+    if (SUCCEEDED(result)) result=button->OnClick(TF_LBI_CLK_LEFT,POINT{},nullptr);
+    if (SUCCEEDED(result)) result=verify_mode(threads,button.Get(),true);
+    std::cout << "System input-mode item and Chinese/English round trip HRESULT=0x"
+              << std::hex << static_cast<unsigned long>(result) << '\n';
+    return result;
+}
+}
 
 int wmain(int count, wchar_t** arguments) {
     if (count>=2 && _wcsicmp(arguments[1],L"probe")==0) {
@@ -19,6 +67,11 @@ int wmain(int count, wchar_t** arguments) {
             TF_INPUTPROCESSORPROFILE profile{};
             result=manager->GetActiveProfile(GUID_TFCAT_TIP_KEYBOARD,&profile);
             if (SUCCEEDED(result) && profile.clsid!=kClsid) result=E_FAIL;
+            if (SUCCEEDED(result) && !(profile.dwCaps & TF_IPP_CAPS_SYSTRAYSUPPORT)) {
+                std::cerr << "System tray support category is missing\n";
+                result=E_FAIL;
+            }
+            if (SUCCEEDED(result)) result=probe_language_bar(threads.Get());
         }
         if (threads) threads->Deactivate();
         return SUCCEEDED(result)?0:1;

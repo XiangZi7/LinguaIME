@@ -26,7 +26,7 @@ impl Default for Settings {
             auto_learn: true,
             collect_stats: false,
             theme: "system".into(),
-            accent: "green".into(),
+            accent: "cyan".into(),
             font_size: 17,
             row_spacing: "comfortable".into(),
             chinese_punctuation: true,
@@ -42,7 +42,7 @@ impl Settings {
         let valid = ["chinese", "bilingual", "detailed"].contains(&self.display_mode.as_str())
             && (3..=9).contains(&self.page_size)
             && ["system", "light", "dark"].contains(&self.theme.as_str())
-            && ["green", "blue"].contains(&self.accent.as_str())
+            && ["cyan", "green", "blue"].contains(&self.accent.as_str())
             && (14..=22).contains(&self.font_size)
             && ["compact", "comfortable"].contains(&self.row_spacing.as_str())
             && ["candidate", "raw"].contains(&self.enter_behavior.as_str())

@@ -42,6 +42,8 @@ Vue 使用 Composition API、`script setup lang="ts"`、显式 props/emits，类
 
 已落地 Rust 核心/存储/FFI、可编译与可注册的 TSF 宿主、原生 context 测试、十页管理端、基础 UI 库与自定义 Windows 标题栏。已在当前用户完成系统安装，Windows API 确认 profile 启用、COM 加载与隔离进程内 TSF 激活成功。
 
+已补齐任务栏「中 / 英」模式按钮与托盘能力注册，真实已安装 profile 的按钮取得、双向切换、模式 compartment 同步和英文按键放行已验证；桌面物理点击与多主题/DPI 外观仍列入实机验收。
+
 下一轮按顺序推进：
 
 1. **P0 实机输入验收**：记事本、浏览器、VS Code 连续输入、取消、焦点切换和管理端关闭场景，记录 Windows 版本、DPI 与复现结果。

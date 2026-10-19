@@ -115,7 +115,11 @@ pub unsafe extern "C" fn lingua_refresh(
                     "light" => 1,
                     _ => 0,
                 },
-                accent: u32::from(s.accent == "blue"),
+                accent: match s.accent.as_str() {
+                    "green" => 0,
+                    "blue" => 1,
+                    _ => 2,
+                },
                 font_size: s.font_size,
                 compact: u32::from(s.row_spacing == "compact"),
                 chinese_punctuation: u32::from(s.chinese_punctuation),

@@ -6,7 +6,7 @@ export interface Settings {
   autoLearn: boolean
   collectStats: boolean
   theme: Theme
-  accent: 'green' | 'blue'
+  accent: 'cyan' | 'green' | 'blue'
   fontSize: number
   rowSpacing: 'compact' | 'comfortable'
   chinesePunctuation: boolean

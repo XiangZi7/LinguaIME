@@ -38,16 +38,24 @@ const { draft } = storeToRefs(useAppStore())
         >
           <div class="flex gap-2">
             <button
-              v-for="color in ['green', 'blue'] as const"
+              v-for="color in ['cyan', 'green', 'blue'] as const"
               :key="color"
               type="button"
-              :aria-label="color === 'green' ? '浅绿高亮' : '浅蓝高亮'"
+              :aria-label="
+                color === 'cyan'
+                  ? '参考图浅青高亮'
+                  : color === 'green'
+                    ? '浅绿高亮'
+                    : '浅蓝高亮'
+              "
               :aria-pressed="draft.accent === color"
               class="grid size-9 cursor-pointer place-items-center rounded-full border-2"
               :class="[
-                color === 'green'
-                  ? 'bg-[#dcebc8] text-[#477553]'
-                  : 'bg-[#deebfc] text-[#436b9b]',
+                color === 'cyan'
+                  ? 'bg-[#e1f4f5] text-[#4f8c9e]'
+                  : color === 'green'
+                    ? 'bg-[#dcebc8] text-[#477553]'
+                    : 'bg-[#deebfc] text-[#436b9b]',
                 draft.accent === color
                   ? 'border-current'
                   : 'border-transparent',

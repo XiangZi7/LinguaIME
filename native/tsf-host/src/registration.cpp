@@ -22,7 +22,11 @@ STDAPI DllUnregisterServer() {
     HRESULT result=CoCreateInstance(CLSID_TF_InputProcessorProfiles,nullptr,CLSCTX_INPROC_SERVER,IID_PPV_ARGS(&profiles));
     if (SUCCEEDED(result)) { profiles->RemoveLanguageProfile(kClsid,kLanguage,kProfile); result=profiles->Unregister(kClsid); }
     ComPtr<ITfCategoryMgr> category;
-    if (SUCCEEDED(CoCreateInstance(CLSID_TF_CategoryMgr,nullptr,CLSCTX_INPROC_SERVER,IID_PPV_ARGS(&category)))) category->UnregisterCategory(kClsid,GUID_TFCAT_TIP_KEYBOARD,kClsid);
+    if (SUCCEEDED(CoCreateInstance(CLSID_TF_CategoryMgr,nullptr,CLSCTX_INPROC_SERVER,IID_PPV_ARGS(&category)))) {
+        for (const GUID* id : {&GUID_TFCAT_TIP_KEYBOARD, &GUID_TFCAT_TIPCAP_SYSTRAYSUPPORT,
+                              &GUID_TFCAT_TIPCAP_INPUTMODECOMPARTMENT})
+            category->UnregisterCategory(kClsid,*id,kClsid);
+    }
     const auto removed=RegDeleteTreeW(HKEY_CURRENT_USER,kRegistry);
     if (removed!=ERROR_SUCCESS && removed!=ERROR_FILE_NOT_FOUND) return HRESULT_FROM_WIN32(removed);
     return result;
@@ -49,7 +53,10 @@ STDAPI DllRegisterServer() {
         if (SUCCEEDED(result)) result=profiles->EnableLanguageProfile(kClsid,kLanguage,kProfile,TRUE);
         ComPtr<ITfCategoryMgr> category;
         if (SUCCEEDED(result)) result=CoCreateInstance(CLSID_TF_CategoryMgr,nullptr,CLSCTX_INPROC_SERVER,IID_PPV_ARGS(&category));
-        if (SUCCEEDED(result)) result=category->RegisterCategory(kClsid,GUID_TFCAT_TIP_KEYBOARD,kClsid);
+        for (const GUID* id : {&GUID_TFCAT_TIP_KEYBOARD, &GUID_TFCAT_TIPCAP_SYSTRAYSUPPORT,
+                              &GUID_TFCAT_TIPCAP_INPUTMODECOMPARTMENT}) {
+            if (SUCCEEDED(result)) result=category->RegisterCategory(kClsid,*id,kClsid);
+        }
         if (FAILED(result)) log_error("CATEGORY_REGISTER_FAILED",result);
         if (FAILED(result)) DllUnregisterServer();
         return result;

@@ -1,6 +1,6 @@
 import type { Candidate } from '../src/types/engine.ts'
 import assert from 'node:assert/strict'
-import { describe, it } from 'vitest'
+import { describe, it } from 'node:test'
 import { DEFAULT_SETTINGS } from '../src/constants/settings.ts'
 import { queryPreview } from '../src/services/preview-engine.ts'
 import {

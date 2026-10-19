@@ -79,6 +79,7 @@ HRESULT TextService::QueryInterface(REFIID id, void** output) {
     else if (id==IID_ITfKeyEventSink) *output=static_cast<ITfKeyEventSink*>(this);
     else if (id==IID_ITfThreadMgrEventSink) *output=static_cast<ITfThreadMgrEventSink*>(this);
     else if (id==IID_ITfCompositionSink) *output=static_cast<ITfCompositionSink*>(this);
+    else if (id==IID_ITfCompartmentEventSink) *output=static_cast<ITfCompartmentEventSink*>(this);
     else return E_NOINTERFACE;
     AddRef(); return S_OK;
 }
@@ -98,10 +99,13 @@ HRESULT TextService::ActivateEx(ITfThreadMgr* manager, TfClientId id, DWORD flag
         result=manager->QueryInterface(IID_PPV_ARGS(&source));
         if (SUCCEEDED(result)) result=source->AdviseSink(IID_ITfThreadMgrEventSink,static_cast<ITfThreadMgrEventSink*>(this),&thread_cookie_);
         if (FAILED(result)) { log_error("THREAD_SINK_ADVISE_FAILED",result); Deactivate(); return result; }
+        result=initialize_language_bar();
+        if (FAILED(result)) { log_error("LANGUAGE_BAR_INIT_FAILED",result); Deactivate(); return result; }
         return S_OK;
     } catch (...) { Deactivate(); return E_FAIL; }
 }
 HRESULT TextService::Deactivate() {
+    uninitialize_language_bar();
     window_.hide();
     if (context_ && composition_) request_edit(context_.Get(),L"",false,true);
     clear_state();
@@ -140,7 +144,7 @@ bool TextService::context_available(ITfContext* context) const {
 }
 bool TextService::handles(ITfContext* context, WPARAM key) const {
     const bool punctuation=config_.chinese_punctuation && !system_modifier_pressed() && lingua::punctuation(static_cast<uint32_t>(key),(GetKeyState(VK_SHIFT)&0x8000)!=0);
-    return engine_ && context_available(context) && (punctuation || lingua::handles_key(static_cast<uint32_t>(key),!buffer_.empty(),modifier_pressed(),config_.previous_key,config_.next_key));
+    return chinese_mode_ && engine_ && context_available(context) && (punctuation || lingua::handles_key(static_cast<uint32_t>(key),!buffer_.empty(),modifier_pressed(),config_.previous_key,config_.next_key));
 }
 HRESULT TextService::OnTestKeyDown(ITfContext* context, WPARAM key, LPARAM, BOOL* eaten) { if (!eaten) return E_POINTER; *eaten=handles(context,key); return S_OK; }
 HRESULT TextService::OnTestKeyUp(ITfContext*, WPARAM, LPARAM, BOOL* eaten) { if (!eaten) return E_POINTER; *eaten=FALSE; return S_OK; }

@@ -6,7 +6,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autoLearn: true,
   collectStats: false,
   theme: 'system',
-  accent: 'green',
+  accent: 'cyan',
   fontSize: 17,
   rowSpacing: 'comfortable',
   chinesePunctuation: true,

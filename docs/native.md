@@ -13,10 +13,26 @@ pnpm native:register
 
 注册后按 Win+Space 选择 `LinguaIME · 中英双语`。已打开的应用可能缓存旧 profile/DLL，必要时重新打开目标应用。输入法独立于 Tauri 主窗口运行。
 
+## 任务栏中英文切换
+
+选择 LinguaIME 后，Windows 输入指示器显示「中 / 英」模式按钮，单击切换：
+
+- **中**：拼音组合与候选，按设置处理中文标点。
+- **英**：字母、空格和标点直接交给目标应用，不产生中文候选。
+- 切换时若仍有组合串，先提交当前候选；没有候选时提交原始拼音。编辑锁失败时保留原模式和组合串。
+
+每次激活默认中文；当前模式属于目标应用的 TSF 线程，不写入个人词库或管理端外观设置。按钮使用真正的 TSF `GUID_LBI_INPUTMODE`，通过 `ITfLangBarItemButton` 接收点击，并同步键盘开关与转换模式 compartment。图标为单色「中 / 英」，由 Windows 按任务栏主题着色；不创建独立托盘进程。
+
+宿主注册系统托盘支持与输入模式 compartment 能力。安装新版后，已加载旧 DLL 的应用需要重开，再用 Win+Space 选择 LinguaIME；不需要重启管理窗口来维持该按钮。
+
+接口依据：[Windows 语言栏项](https://learn.microsoft.com/en-us/windows/win32/api/ctfutb/ns-ctfutb-tf_langbariteminfo)、[TSF 能力注册](https://learn.microsoft.com/en-us/windows/win32/tsf/predefined-category-values)。
+
+## 诊断命令
+
 ```powershell
 # 查看 Windows TSF 启用状态与 COM 加载结果
 .\build\native\profile_tool.exe status
-# 仅在测试进程激活 profile，不改变其他应用或默认输入法
+# 仅在测试进程激活 profile，并检查系统模式按钮与中英切换，不改变其他应用或默认输入法
 .\build\native\profile_tool.exe probe
 # 移除系统注册；保留词典与个人数据
 pnpm native:unregister
@@ -26,9 +42,9 @@ pnpm native:unregister
 
 ## 已测试边界
 
-原生构建自动执行：C ABI 布局与词典桥接、空闲符号路由、真实 TSF 内存 context 中的拼音组合、中文提交和取消。该 context harness 直接注入应用 client ID，隔离 Windows 的 OS profile 分配；它不冒充记事本或浏览器实测。
+原生构建自动执行：C ABI 布局与词典桥接、空闲符号路由、真实 TSF 内存 context 中的拼音组合、中文提交和取消；另验证中英按钮、切换时提交组合串、英文按键直通、系统 compartment 同步与停用清理。该 context harness 直接注入应用 client ID，隔离 Windows 的 OS profile 分配；它不冒充记事本或浏览器实测。
 
-另通过 Windows API 验证已注册 profile enabled=true、COM 激活成功、隔离测试进程中的真实 TSF profile 激活成功。记录见 `docs/verification.md`。
+另通过 Windows API 验证已注册 profile enabled=true、COM 激活成功、隔离测试进程中的真实 TSF profile 激活成功；已安装 DLL 注册的模式按钮可被系统取得，执行中文 → 英文 → 中文往返后，文字和两个模式 compartment 均一致。记录见 `docs/verification.md`。
 
 仍需在记事本、浏览器、IDE 中人工测试：连续输入、焦点变化、高 DPI、多显示器、屏幕边缘、辅助技术和升级/回滚。Win32 候选窗口当前未实现完整 UI Automation provider；不声明已完成可访问性发布验收。
 

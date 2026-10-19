@@ -45,7 +45,7 @@ defineEmits<{ choose: [candidate: Candidate] }>()
         </span>
       </span>
       <span
-        v-if="mode === 'detailed'"
+        v-if="mode === 'detailed' && selected"
         class="mt-1 block truncate text-[10px] text-muted"
       >
         {{ candidate.reading }}

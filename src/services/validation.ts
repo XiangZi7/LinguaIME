@@ -34,7 +34,7 @@ export function validateSettings(settings: Settings): void {
     settings.pageSize < 3 ||
     settings.pageSize > 9 ||
     !['light', 'dark', 'system'].includes(settings.theme) ||
-    !['green', 'blue'].includes(settings.accent) ||
+    !['cyan', 'green', 'blue'].includes(settings.accent) ||
     settings.fontSize < 14 ||
     settings.fontSize > 22 ||
     !['compact', 'comfortable'].includes(settings.rowSpacing) ||

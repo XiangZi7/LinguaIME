@@ -1,9 +1,12 @@
 #pragma once
 #include "candidate_window.h"
 #include "key_policy.h"
+#include "language_bar.h"
+#include <array>
 
 class TextService final : public ITfTextInputProcessorEx, public ITfKeyEventSink,
-                          public ITfThreadMgrEventSink, public ITfCompositionSink {
+                          public ITfThreadMgrEventSink, public ITfCompositionSink,
+                          public ITfCompartmentEventSink {
 public:
     TextService();
     ~TextService();
@@ -25,16 +28,23 @@ public:
     HRESULT STDMETHODCALLTYPE OnPushContext(ITfContext*) override;
     HRESULT STDMETHODCALLTYPE OnPopContext(ITfContext*) override;
     HRESULT STDMETHODCALLTYPE OnCompositionTerminated(TfEditCookie, ITfComposition*) override;
+    HRESULT STDMETHODCALLTYPE OnChange(REFGUID) override;
     HRESULT edit(TfEditCookie, ITfContext*, const std::wstring&, bool commit, bool cancel);
 #ifdef LINGUA_TESTING
     // The harness uses a real TSF context without claiming to be the OS-activated keyboard TIP.
-    HRESULT initialize_for_test(TfClientId id) {
+    HRESULT initialize_for_test(ITfThreadMgr* manager, TfClientId id) {
+        thread_manager_=manager;
         client_id_=id;
         engine_=lingua_create();
-        return engine_ && lingua_refresh(engine_,&config_)==0 ? S_OK : E_FAIL;
+        return engine_ && lingua_refresh(engine_,&config_)==0 ? initialize_language_bar() : E_FAIL;
     }
+    ITfLangBarItemButton* language_bar_for_test() { return language_bar_button_.Get(); }
 #endif
 private:
+    HRESULT initialize_language_bar();
+    void uninitialize_language_bar();
+    HRESULT set_input_mode(bool chinese);
+    HRESULT publish_input_mode(bool chinese);
     HRESULT request_edit(ITfContext*, std::wstring text, bool commit, bool cancel);
     void refresh_candidates();
     HRESULT choose(unsigned index);
@@ -48,6 +58,16 @@ private:
     ComPtr<ITfComposition> composition_;
     TfClientId client_id_ = TF_CLIENTID_NULL;
     DWORD thread_cookie_ = TF_INVALID_COOKIE;
+    struct ModeCompartment {
+        ComPtr<ITfCompartment> value;
+        ComPtr<ITfSource> source;
+        DWORD cookie = TF_INVALID_COOKIE;
+    };
+    std::array<ModeCompartment, 2> mode_compartments_;
+    ComPtr<ITfLangBarItemMgr> language_bar_manager_;
+    ComPtr<LanguageBarButton> language_bar_button_;
+    bool chinese_mode_ = true;
+    bool publishing_mode_ = false;
     EngineContext* engine_ = nullptr;
     LinguaConfig config_{7,1,0,0,17,0,1,0,0xBD,0xBB};
     LinguaPage page_{};

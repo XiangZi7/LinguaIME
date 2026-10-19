@@ -2,25 +2,27 @@
 
 ## 运行边界
 
-Windows 应用 → C++ TSF/COM 宿主 → Rust C ABI → 拼音核心与 SQLite。候选窗口由 Win32 绘制，`WS_EX_NOACTIVATE` 防止夺焦。Tauri 管理应用不在按键路径上，关闭它不会卸载输入法。
+Windows 应用 → C++ TSF/COM 宿主 → Rust C ABI → 拼音核心与 SQLite。候选窗口采用 Win32 非激活分层窗口、Direct2D 圆角/阴影与 DirectWrite 文本，`WS_EX_NOACTIVATE` 防止夺焦。Tauri 管理应用不在按键路径上，关闭它不会卸载输入法。
+
+`language_bar.cpp` 封装系统任务栏的「中 / 英」按钮、单色图标、点击回调和语言栏通知；`input_mode.cpp` 管理模式与 TSF compartment 同步。按钮停用时先断开回调，再移除语言栏项与监听，避免 Windows 持有的 COM 引用回调已销毁的服务。英文模式在按键路由入口放行，不依赖管理窗口转发按键。
 
 保留现有仓库的 `src` / `src-tauri` 根目录，新增 Rust workspace 与 `native/tsf-host`，避免为了目录形式迁移现有工具链。`Cargo.lock`（根目录）和 `pnpm-lock.yaml` 是版本基准。
 
-| 目录 | 职责 |
-| --- | --- |
-| `crates/ime-types` | 候选、设置、个人数据、错误与 schema 契约 |
-| `crates/ime-core` | CC-CEDICT 索引、拼音边界、词频排序、动态规划组合与分页 |
-| `crates/ime-storage` | SQLite WAL、版本化迁移、设置、个人词条、词频与生词本 |
-| `crates/ime-ffi` | ABI v1，UTF-8、调用方输出缓冲区、panic 隔离 |
-| `native/tsf-host` | COM 生命周期、键盘策略、编辑会话、焦点与 Win32 候选窗 |
-| `src-tauri/src/commands` | 参数与错误边界、核心调用、系统安装命令 |
-| `src/app` | 应用壳、自定义 Windows 标题栏、导航与窗口控制 |
-| `src/components/ui` | 无业务基础 UI 组件库 |
-| `src/features` | 按功能划分的页面、组件与 composable |
-| `src/services` | 桌面 invoke 与浏览器预览 adapter、校验与导出 |
-| `src/stores` | 设置草稿、保存状态和管理数据快照 |
-| `data/dictionaries` | 可追溯词典、摘要和数据许可证 |
-| `tests` | 引擎/导入契约与 Playwright 端到端测试 |
+| 目录                     | 职责                                                   |
+| ------------------------ | ------------------------------------------------------ |
+| `crates/ime-types`       | 候选、设置、个人数据、错误与 schema 契约               |
+| `crates/ime-core`        | CC-CEDICT 索引、拼音边界、词频排序、动态规划组合与分页 |
+| `crates/ime-storage`     | SQLite WAL、版本化迁移、设置、个人词条、词频与生词本   |
+| `crates/ime-ffi`         | ABI v1，UTF-8、调用方输出缓冲区、panic 隔离            |
+| `native/tsf-host`        | COM 生命周期、键盘策略、编辑会话、焦点与 Win32 候选窗  |
+| `src-tauri/src/commands` | 参数与错误边界、核心调用、系统安装命令                 |
+| `src/app`                | 应用壳、自定义 Windows 标题栏、导航与窗口控制          |
+| `src/components/ui`      | 无业务基础 UI 组件库                                   |
+| `src/features`           | 按功能划分的页面、组件与 composable                    |
+| `src/services`           | 桌面 invoke 与浏览器预览 adapter、校验与导出           |
+| `src/stores`             | 设置草稿、保存状态和管理数据快照                       |
+| `data/dictionaries`      | 可追溯词典、摘要和数据许可证                           |
+| `tests`                  | 引擎/导入契约与 Playwright 端到端测试                  |
 
 ## 输入与数据
 
