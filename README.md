@@ -1,44 +1,63 @@
-# AMV Studio
+# LinguaIME
 
-动漫、音乐与每一个灵感瞬间的本地创作工作台。Vue 3 + TypeScript + Tailwind CSS v4 + Vue Router + Pinia + Tauri 2 / Rust。
+本地优先的 Windows 中英双语输入法。C++ TSF/COM + Rust 输入核心 + Tauri 2 + Vue 3 / TypeScript + Tailwind CSS v4。
 
 ## 运行
 
-需要 Node.js 22.18+、pnpm 10。桌面模式还需要 Rust 与 Windows 的 Tauri 开发环境。
+需要 Node.js 22.18+、pnpm 10、Rust MSVC、Visual Studio C++ 桌面构建工具与 Windows SDK。
 
 ```powershell
-pnpm install
+pnpm install --frozen-lockfile
 pnpm dev
-# 启动原生桌面窗口
+# 浏览器交互预览：http://127.0.0.1:1430
 pnpm tauri dev
+# 原生构建验证后启动桌面管理应用
 ```
 
-浏览器预览：[http://127.0.0.1:1420](http://127.0.0.1:1420)。新建项目、导入本地视频 / 图片 / 音频，点击素材加号或双击加入时间线。选择片段后在 Inspector 中调整；回车或移开焦点提交数值。支持同轨拖动、拆分与撤销重做。Storyboard 与 Edit 共用真实工程数据。
+系统输入法需要另外安装：点击管理端的「安装到 Windows 输入法」，接受 Windows 管理员授权后，按 Win+Space 选择 LinguaIME。也可以运行：
 
-## 当前状态
+```powershell
+pnpm native:build
+pnpm native:register
+# 移除注册，保留个人数据
+pnpm native:unregister
+```
 
-已实现项目管理、本地素材与预览、基础多轨编辑、自动保存、撤销重做、离线规则分镜提案、三种可用技能、工程备份和六个带按需缓存的路由。
+管理应用使用自定义 Windows 标题栏，支持拖动、最小化、最大化/还原、关闭与未保存设置保护。修改窗口配置后需要重启桌面应用。
 
-**尚未实现云端 AI、FFmpeg 成片渲染、字幕 / 关键帧与复杂转场，当前不能导出 MP4。** 界面明确区分已实现与待接入的能力，不使用虚假生成与渲染进度。完整计划见 [实施路线](docs/roadmap.md)。
+## 已实现与边界
 
-浏览器工程与媒体缓存在 IndexedDB；桌面工程通过 Rust 保存到应用数据目录并保留上一版 .bak，桌面媒体仍由 WebView IndexedDB 缓存。`.amv.json` 备份不包含原视频，迁移时需保留媒体并重新关联。浏览器与桌面的工作空间相互独立。
+- 独立原生 TSF 宿主和 Win32 候选窗，不依赖管理窗口进行输入。
+- 全拼检索、显式音节边界、连续拼音组合、词频排序、去重与分页。
+- CC-CEDICT 121,202 条离线词条，jieba 静态词频；来源、许可与摘要随数据保存。
+- 十个管理页面、Tailwind v4 语义令牌和可复用 UI 组件库；深浅色、实时候选预览、设置保存与取消。
+- SQLite 设置、个人词条、词频、收藏与复习，导入校验/事务、导出与确认清除。
+- 系统注册、当前用户启用、COM 与进程内真实 TSF 激活已验证。
 
-## 维护与验证
+当前是 x64 开发预览。记事本/浏览器/IDE 全链路、多 DPI、多显示器与发布安装签名仍需验收。在线翻译、发音、日语、32 位宿主与完整备份恢复尚未实现，不在界面冒充可用。
+
+桌面数据在 `%LOCALAPPDATA%/LinguaIME/lingua.db`。浏览器预览使用 699 条同源子集和独立本地存储，不是 Windows 输入法。基础输入没有联网请求，不保存完整输入文本，统计默认关闭。
+
+## 检查
 
 ```powershell
 pnpm test
+pnpm test:e2e
 pnpm build
+pnpm lint
 pnpm format:check
-cd src-tauri
-cargo fmt --check
-cargo test --offline
-cargo clippy --offline -- -D warnings
+cargo fmt --all --check
+cargo test --workspace --locked --offline
+cargo clippy --workspace --locked --offline -- -D warnings
+pnpm native:build
 ```
 
-- [架构、组件边界、路由缓存与存储](docs/architecture.md)
-- [通用 UI 组件库与使用约定](docs/ui-components.md)
-- [实施进度与后续开发计划](docs/roadmap.md)
-- [原创视觉资源与生成提示词](docs/assets.md)
-- [完整产品需求](prompt/AMV-Studio.md)
+端到端测试使用本机 Microsoft Edge 和独立端口 1438。原生测试隔离个人数据库，不更改系统默认输入法。生产构建：`pnpm tauri build`，会先构建原生宿主并打包安装资源。
 
-样式 Token 统一位于 `src/assets/styles/main.css` 的 `@theme`，基础 UI 组件从 `@/components/ui` 导入。页面通过 `route.meta.keepAlive` 控制缓存，编辑器释放播放器实例并按项目保留轻量视图状态。
+- [实施计划](docs/implementation-plan.md)
+- [架构与代码规范](docs/architecture.md)
+- [UI 组件库](docs/ui-components.md)
+- [原生安装与故障处理](docs/native.md)
+- [验证记录与未验收项目](docs/verification.md)
+- [词典来源与许可证](data/dictionaries/README.md)
+- [原始需求](prompt/LinguaIME.md)

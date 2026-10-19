@@ -1,4 +1,6 @@
+import { Buffer } from 'node:buffer'
 import { expect, test } from '@playwright/test'
+import { mockDesktop } from './tauri-mock'
 
 test('candidate keyboard selection and real collection', async ({ page }) => {
   await page.goto('/')
@@ -51,36 +53,40 @@ test('personal dictionary CRUD, import validation and deliberate data clearing',
   await page.goto('/#/dictionary')
   await page.getByRole('button', { name: '添加词条' }).click()
   await page.getByLabel('中文词条').fill('项目管理')
-  await page.getByLabel('全拼', { exact: true }).fill('xiang mu guan li')
+  await page.getByLabel('全拼').fill('xiang mu guan li')
   await page.getByLabel('英文释义').fill('project management')
   await page.getByRole('button', { name: '保存词条' }).click()
   await expect(page.getByRole('dialog')).toBeHidden()
   await page.getByRole('button', { name: /个人词库 · 1/ }).click()
-  await expect(page.getByRole('cell', { name: '项目管理' })).toBeVisible()
+  await expect(
+    page.getByRole('cell', { name: '项目管理', exact: true })
+  ).toBeVisible()
   await page.getByRole('button', { name: '编辑项目管理' }).click()
   await page.getByLabel('英文释义').fill('managing a project')
   await page.getByRole('button', { name: '保存词条' }).click()
   await expect(
     page.getByRole('cell', { name: 'managing a project' })
   ).toBeVisible()
-  await page
-    .getByLabel('导入个人词库 JSON')
-    .setInputFiles({
-      name: 'words.json',
-      mimeType: 'application/json',
-      buffer: Buffer.from('[{"text":"语言连接","reading":"yu yan lian jie"}]'),
-    })
+  await page.getByLabel('导入个人词库 JSON').setInputFiles({
+    name: 'words.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from('[{"text":"语言连接","reading":"yu yan lian jie"}]'),
+  })
   await expect(
     page.getByRole('heading', { name: '确认导入个人词库' })
   ).toBeVisible()
   await page.getByRole('button', { name: '导入 1 条' }).click()
-  await expect(page.getByRole('cell', { name: '语言连接' })).toBeVisible()
+  await expect(
+    page.getByRole('cell', { name: '语言连接', exact: true })
+  ).toBeVisible()
   await page.getByRole('button', { name: '删除项目管理' }).click()
   await page
     .getByRole('dialog')
     .getByRole('button', { name: '删除词条' })
     .click()
-  await expect(page.getByRole('cell', { name: '项目管理' })).toBeHidden()
+  await expect(
+    page.getByRole('cell', { name: '项目管理', exact: true })
+  ).toBeHidden()
   await page
     .getByRole('navigation')
     .getByRole('link', { name: '隐私与数据' })
@@ -92,7 +98,9 @@ test('personal dictionary CRUD, import validation and deliberate data clearing',
     .getByRole('link', { name: '词库管理' })
     .click()
   await page.getByRole('button', { name: /个人词库 · 1/ }).click()
-  await expect(page.getByRole('cell', { name: '语言连接' })).toBeVisible()
+  await expect(
+    page.getByRole('cell', { name: '语言连接', exact: true })
+  ).toBeVisible()
 })
 
 test('all routes load, desktop and compact layouts have no page overflow', async ({
@@ -145,4 +153,42 @@ test('all routes load, desktop and compact layouts have no page overflow', async
     fullPage: true,
   })
   expect(errors).toEqual([])
+})
+
+test('custom titlebar controls use native window commands and installation refreshes status', async ({
+  page,
+}) => {
+  await mockDesktop(page)
+  await page.goto('/#/languages')
+  await page.getByRole('button', { name: '最小化窗口' }).click()
+  await page.getByRole('button', { name: '最大化窗口' }).click()
+  await expect(page.getByRole('button', { name: '还原窗口' })).toBeVisible()
+  await page.getByRole('button', { name: '还原窗口' }).click()
+  await expect(page.getByRole('button', { name: '最大化窗口' })).toBeVisible()
+  await page.getByRole('button', { name: '安装到 Windows 输入法' }).click()
+  await expect(
+    page.getByText('已加入 Windows 输入法列表。', { exact: false })
+  ).toBeVisible()
+  await page
+    .getByRole('navigation')
+    .getByRole('link', { name: '输入设置' })
+    .click()
+  await page.getByRole('button', { name: '双语详细', exact: true }).click()
+  await page.getByRole('button', { name: '关闭窗口' }).click()
+  await expect(
+    page.getByRole('heading', { name: '保存更改后再离开？' })
+  ).toBeVisible()
+  await page.getByRole('button', { name: '继续编辑' }).click()
+  await page.screenshot({
+    path: 'test-results/custom-titlebar.png',
+    fullPage: true,
+  })
+  const commands = await page.evaluate(
+    () =>
+      JSON.parse(sessionStorage.getItem('window-commands') ?? '[]') as string[]
+  )
+  expect(commands).toContain('plugin:window|minimize')
+  expect(commands).toContain('plugin:window|toggle_maximize')
+  expect(commands).toContain('install_native')
+  expect(commands).not.toContain('plugin:window|close')
 })

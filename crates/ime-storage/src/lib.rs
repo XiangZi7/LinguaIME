@@ -52,6 +52,9 @@ impl Storage {
 }
 
 pub fn default_data_path() -> PathBuf {
+    if let Some(directory) = std::env::var_os("LINGUAIME_DATA_DIR") {
+        return PathBuf::from(directory).join("lingua.db");
+    }
     let base = std::env::var_os("LOCALAPPDATA")
         .map(PathBuf::from)
         .or_else(|| std::env::var_os("XDG_DATA_HOME").map(PathBuf::from))

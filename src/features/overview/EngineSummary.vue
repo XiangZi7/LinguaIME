@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { UiBadge, UiIcon, UiPanel } from '@/components/ui'
+import NativeInstallation from '@/features/languages/NativeInstallation.vue'
 import { desktop } from '@/services'
 import { useAppStore } from '@/stores/app'
 const app = useAppStore()
@@ -60,6 +61,9 @@ const app = useAppStore()
             :size="13"
           />
         </RouterLink>
+        <div class="mt-4">
+          <NativeInstallation compact />
+        </div>
       </div>
     </UiPanel>
     <UiPanel title="让双手，专注表达">

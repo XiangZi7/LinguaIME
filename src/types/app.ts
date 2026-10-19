@@ -29,6 +29,7 @@ export interface Backup {
   learning: LearningItem[]
 }
 export interface AppService {
+  installNative: (uninstall: boolean) => Promise<void>
   snapshot: () => Promise<AppSnapshot>
   query: (request: EngineRequest) => Promise<CandidatePage>
   saveSettings: (settings: Settings) => Promise<void>

@@ -2,6 +2,7 @@
 import { UiBadge, UiIcon, UiPageHeader, UiPanel } from '@/components/ui'
 import { desktop } from '@/services'
 import { useAppStore } from '@/stores/app'
+import NativeInstallation from './NativeInstallation.vue'
 const app = useAppStore()
 </script>
 <template>
@@ -11,6 +12,7 @@ const app = useAppStore()
     eyebrow="LANGUAGES, CONNECTED"
   />
   <div class="max-w-4xl space-y-5">
+    <NativeInstallation />
     <UiPanel>
       <div class="flex flex-wrap items-start justify-between gap-5 p-6">
         <div class="flex gap-4">

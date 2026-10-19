@@ -14,7 +14,7 @@
     "check:rust": "cargo fmt --all --check && cargo clippy --workspace --locked --offline -- -D warnings && cargo test --workspace --locked --offline",
     "format:check": "node node_modules/prettier/bin/prettier.cjs --check src tests docs vite.config.ts playwright.config.ts eslint.config.mjs package.json index.html",
     "native:build": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-native.ps1",
-    "test:e2e": "node node_modules/@playwright/test/cli.js test",
+    "test:e2e": "node scripts/test-e2e.mjs",
     "native:unregister": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/register-ime.ps1 -Unregister",
     "lint": "node node_modules/eslint/bin/eslint.js .",
     "native:register": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/register-ime.ps1"

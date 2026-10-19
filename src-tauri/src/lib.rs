@@ -1,4 +1,5 @@
 mod commands;
+mod native_status;
 mod state;
 
 use state::AppState;
@@ -14,6 +15,7 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            commands::native::install_native,
             commands::get_snapshot,
             commands::query_candidates,
             commands::save_settings,

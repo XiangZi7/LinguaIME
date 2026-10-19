@@ -54,7 +54,12 @@ const { text, reading, translation, error } = toRefs(state)
         class="field-label"
       >
         中文词条
-        <span class="text-danger">*</span>
+        <span
+          class="text-danger"
+          aria-hidden="true"
+        >
+          *
+        </span>
       </label>
       <input
         id="phrase-text"
@@ -72,7 +77,12 @@ const { text, reading, translation, error } = toRefs(state)
         class="field-label"
       >
         全拼
-        <span class="text-danger">*</span>
+        <span
+          class="text-danger"
+          aria-hidden="true"
+        >
+          *
+        </span>
       </label>
       <input
         id="phrase-reading"

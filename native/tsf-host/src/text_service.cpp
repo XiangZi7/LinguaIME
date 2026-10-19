@@ -1,13 +1,16 @@
 #include "text_service.h"
+#include "diagnostics.h"
 #include <algorithm>
 #include <new>
 #include <utility>
+#include <initguid.h>
+#include <inputscope.h>
 
 namespace {
 class EditSession final : public ITfEditSession {
 public:
-    EditSession(TextService* service, ITfContext* context, std::wstring text, bool commit, bool cancel)
-        : service_(service), context_(context), text_(std::move(text)), commit_(commit), cancel_(cancel) { service_->AddRef(); ++g_objects; }
+    EditSession(TextService* service, ITfContext* context, std::wstring text, bool commit, bool cancel, ITfComposition* cancelling)
+        : service_(service), context_(context), text_(std::move(text)), commit_(commit), cancel_(cancel), cancelling_(cancelling) { service_->AddRef(); ++g_objects; }
     ~EditSession() { service_->Release(); --g_objects; }
     HRESULT STDMETHODCALLTYPE QueryInterface(REFIID id, void** output) override {
         if (!output) return E_POINTER;
@@ -18,7 +21,16 @@ public:
     ULONG STDMETHODCALLTYPE AddRef() override { return ++references_; }
     ULONG STDMETHODCALLTYPE Release() override { const auto n=--references_; if (!n) delete this; return n; }
     HRESULT STDMETHODCALLTYPE DoEditSession(TfEditCookie cookie) override {
-        try { return service_->edit(cookie,context_.Get(),text_,commit_,cancel_); }
+        try {
+            if (cancel_ && cancelling_) {
+                ComPtr<ITfRange> range;
+                auto result=cancelling_->GetRange(&range);
+                if (SUCCEEDED(result)) result=range->SetText(cookie,0,L"",0);
+                if (SUCCEEDED(result)) result=cancelling_->EndComposition(cookie);
+                return result;
+            }
+            return service_->edit(cookie,context_.Get(),text_,commit_,cancel_);
+        }
         catch (...) { return E_FAIL; }
     }
 private:
@@ -27,9 +39,33 @@ private:
     ComPtr<ITfContext> context_;
     std::wstring text_;
     bool commit_, cancel_;
+    ComPtr<ITfComposition> cancelling_;
 };
-bool modifier_pressed() { return (GetKeyState(VK_CONTROL)&0x8000) || (GetKeyState(VK_MENU)&0x8000) ||
-                                  (GetKeyState(VK_LWIN)&0x8000) || (GetKeyState(VK_RWIN)&0x8000) || (GetKeyState(VK_SHIFT)&0x8000); }
+bool system_modifier_pressed() { return (GetKeyState(VK_CONTROL)&0x8000) || (GetKeyState(VK_MENU)&0x8000) ||
+                                  (GetKeyState(VK_LWIN)&0x8000) || (GetKeyState(VK_RWIN)&0x8000); }
+bool modifier_pressed() { return system_modifier_pressed() || (GetKeyState(VK_SHIFT)&0x8000); }
+bool sensitive_context(ITfContext* context, TfEditCookie cookie) {
+    TF_SELECTION selection{}; ULONG count=0;
+    if (FAILED(context->GetSelection(cookie,TF_DEFAULT_SELECTION,1,&selection,&count)) || count==0) return false;
+    ComPtr<ITfRange> range; range.Attach(selection.range);
+    ComPtr<ITfReadOnlyProperty> property;
+    if (FAILED(context->GetAppProperty(GUID_PROP_INPUTSCOPE,&property))) return false;
+    VARIANT value{};
+    if (FAILED(property->GetValue(cookie,range.Get(),&value))) return false;
+    bool sensitive=false;
+    if (value.vt==VT_UNKNOWN && value.punkVal) {
+        ComPtr<ITfInputScope> scope;
+        if (SUCCEEDED(value.punkVal->QueryInterface(IID_PPV_ARGS(&scope)))) {
+            InputScope* scopes=nullptr; UINT size=0;
+            if (SUCCEEDED(scope->GetInputScopes(&scopes,&size))) {
+                for (UINT i=0;i<size;++i) if (scopes[i]==IS_PASSWORD || scopes[i]==IS_PRIVATE || scopes[i]==IS_NUMERIC_PASSWORD || scopes[i]==IS_NUMERIC_PIN || scopes[i]==IS_ALPHANUMERIC_PIN) sensitive=true;
+                CoTaskMemFree(scopes);
+            }
+        }
+    }
+    VariantClear(&value);
+    return sensitive;
+}
 }
 
 TextService::TextService() { ++g_objects; window_.on_select=[this](unsigned index) { choose(index); }; }
@@ -57,11 +93,11 @@ HRESULT TextService::ActivateEx(ITfThreadMgr* manager, TfClientId id, DWORD flag
         ComPtr<ITfKeystrokeMgr> keys;
         HRESULT result=manager->QueryInterface(IID_PPV_ARGS(&keys));
         if (SUCCEEDED(result)) result=keys->AdviseKeyEventSink(id,this,TRUE);
-        if (FAILED(result)) { Deactivate(); return result; }
+        if (FAILED(result)) { log_error("KEY_SINK_ADVISE_FAILED",result); Deactivate(); return result; }
         ComPtr<ITfSource> source;
         result=manager->QueryInterface(IID_PPV_ARGS(&source));
         if (SUCCEEDED(result)) result=source->AdviseSink(IID_ITfThreadMgrEventSink,static_cast<ITfThreadMgrEventSink*>(this),&thread_cookie_);
-        if (FAILED(result)) { Deactivate(); return result; }
+        if (FAILED(result)) { log_error("THREAD_SINK_ADVISE_FAILED",result); Deactivate(); return result; }
         return S_OK;
     } catch (...) { Deactivate(); return E_FAIL; }
 }
@@ -103,7 +139,8 @@ bool TextService::context_available(ITfContext* context) const {
     return true;
 }
 bool TextService::handles(ITfContext* context, WPARAM key) const {
-    return engine_ && context_available(context) && lingua::handles_key(static_cast<uint32_t>(key),!buffer_.empty(),modifier_pressed(),config_.previous_key,config_.next_key);
+    const bool punctuation=config_.chinese_punctuation && !system_modifier_pressed() && lingua::punctuation(static_cast<uint32_t>(key),(GetKeyState(VK_SHIFT)&0x8000)!=0);
+    return engine_ && context_available(context) && (punctuation || lingua::handles_key(static_cast<uint32_t>(key),!buffer_.empty(),modifier_pressed(),config_.previous_key,config_.next_key));
 }
 HRESULT TextService::OnTestKeyDown(ITfContext* context, WPARAM key, LPARAM, BOOL* eaten) { if (!eaten) return E_POINTER; *eaten=handles(context,key); return S_OK; }
 HRESULT TextService::OnTestKeyUp(ITfContext*, WPARAM, LPARAM, BOOL* eaten) { if (!eaten) return E_POINTER; *eaten=FALSE; return S_OK; }
@@ -115,10 +152,24 @@ HRESULT TextService::OnKeyDown(ITfContext* context, WPARAM key, LPARAM, BOOL* ea
     *eaten=FALSE;
     try {
         if (!handles(context,key)) {
-            if (!buffer_.empty()) cancel();
+            if (!buffer_.empty()) {
+                if (!system_modifier_pressed() && key>=VK_SPACE) {
+                    const auto text=page_.item_count?wide(page_.items[selected_].text):wide(buffer_.c_str());
+                    if (SUCCEEDED(request_edit(context,text,true,false))) clear_state();
+                } else cancel();
+            }
             return S_OK;
         }
         *eaten=TRUE;
+        const wchar_t punctuation=config_.chinese_punctuation?lingua::punctuation(static_cast<uint32_t>(key),(GetKeyState(VK_SHIFT)&0x8000)!=0):L'\0';
+        if (punctuation) {
+            std::wstring text;
+            if (!buffer_.empty()) text=page_.item_count?wide(page_.items[selected_].text):wide(buffer_.c_str());
+            text+=punctuation;
+            const auto result=request_edit(context,text,true,false);
+            if (SUCCEEDED(result)) clear_state(); else *eaten=FALSE;
+            return S_OK;
+        }
         if (key==VK_ESCAPE) { cancel(); return S_OK; }
         if (key==VK_RETURN || key==VK_SPACE) {
             if (key==VK_RETURN && config_.enter_raw) {
@@ -177,14 +228,18 @@ HRESULT TextService::OnCompositionTerminated(TfEditCookie cookie, ITfComposition
     return S_OK;
 }
 HRESULT TextService::request_edit(ITfContext* context, std::wstring text, bool commit, bool cancel) {
-    auto* session=new(std::nothrow) EditSession(this,context,std::move(text),commit,cancel);
+    auto* session=new(std::nothrow) EditSession(this,context,std::move(text),commit,cancel,cancel?composition_.Get():nullptr);
     if (!session) return E_OUTOFMEMORY;
     HRESULT session_result=E_FAIL;
-    const auto result=context->RequestEditSession(client_id_,session,TF_ES_SYNC|TF_ES_READWRITE,&session_result);
+    auto result=context->RequestEditSession(client_id_,session,TF_ES_SYNC|TF_ES_READWRITE,&session_result);
+    if (cancel && (FAILED(result) || FAILED(session_result))) {
+        result=context->RequestEditSession(client_id_,session,TF_ES_ASYNC|TF_ES_READWRITE,&session_result);
+    }
     session->Release();
     return FAILED(result)?result:session_result;
 }
 HRESULT TextService::edit(TfEditCookie cookie, ITfContext* context, const std::wstring& text, bool commit, bool cancel) {
+    if (!cancel && sensitive_context(context,cookie)) return E_ACCESSDENIED;
     ComPtr<ITfRange> range;
     if (composition_) {
         const auto result=composition_->GetRange(&range);

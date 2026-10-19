@@ -1,4 +1,5 @@
 #include "common.h"
+#include "diagnostics.h"
 #include <iterator>
 
 namespace {
@@ -15,7 +16,7 @@ struct ComScope {
     ~ComScope() { if (SUCCEEDED(result)) CoUninitialize(); }
 };
 }
-extern "C" __declspec(dllexport) HRESULT WINAPI DllUnregisterServer() {
+STDAPI DllUnregisterServer() {
     ComScope com;
     ComPtr<ITfInputProcessorProfiles> profiles;
     HRESULT result=CoCreateInstance(CLSID_TF_InputProcessorProfiles,nullptr,CLSCTX_INPROC_SERVER,IID_PPV_ARGS(&profiles));
@@ -26,7 +27,7 @@ extern "C" __declspec(dllexport) HRESULT WINAPI DllUnregisterServer() {
     if (removed!=ERROR_SUCCESS && removed!=ERROR_FILE_NOT_FOUND) return HRESULT_FROM_WIN32(removed);
     return result;
 }
-extern "C" __declspec(dllexport) HRESULT WINAPI DllRegisterServer() {
+STDAPI DllRegisterServer() {
     try {
         wchar_t module_path[MAX_PATH]{};
         const DWORD length=GetModuleFileNameW(g_module,module_path,MAX_PATH);
@@ -40,13 +41,16 @@ extern "C" __declspec(dllexport) HRESULT WINAPI DllRegisterServer() {
         ComPtr<ITfInputProcessorProfiles> profiles;
         result=CoCreateInstance(CLSID_TF_InputProcessorProfiles,nullptr,CLSCTX_INPROC_SERVER,IID_PPV_ARGS(&profiles));
         if (SUCCEEDED(result)) result=profiles->Register(kClsid);
+        if (FAILED(result)) log_error("PROFILE_REGISTER_FAILED",result);
         constexpr wchar_t description[]=L"LinguaIME · 中英双语";
         if (SUCCEEDED(result)) result=profiles->AddLanguageProfile(kClsid,kLanguage,kProfile,description,
             static_cast<ULONG>(std::size(description)-1),module_path,length,0);
+        if (FAILED(result)) log_error("LANGUAGE_PROFILE_FAILED",result);
         if (SUCCEEDED(result)) result=profiles->EnableLanguageProfile(kClsid,kLanguage,kProfile,TRUE);
         ComPtr<ITfCategoryMgr> category;
         if (SUCCEEDED(result)) result=CoCreateInstance(CLSID_TF_CategoryMgr,nullptr,CLSCTX_INPROC_SERVER,IID_PPV_ARGS(&category));
         if (SUCCEEDED(result)) result=category->RegisterCategory(kClsid,GUID_TFCAT_TIP_KEYBOARD,kClsid);
+        if (FAILED(result)) log_error("CATEGORY_REGISTER_FAILED",result);
         if (FAILED(result)) DllUnregisterServer();
         return result;
     } catch (...) { return E_FAIL; }

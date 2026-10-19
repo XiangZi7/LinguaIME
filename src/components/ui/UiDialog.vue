@@ -20,7 +20,7 @@ onBeforeUnmount(() => dialog.value?.close())
     <dialog
       ref="dialog"
       :aria-labelledby="titleId"
-      class="m-auto max-h-[85vh] w-[min(560px,calc(100%-32px))] overflow-y-auto rounded-2xl border border-line bg-surface p-0 text-ink shadow-xl backdrop:bg-black/30"
+      class="m-auto max-h-[85vh] w-[min(560px,calc(100%_-_32px))] overflow-y-auto rounded-2xl border border-line bg-surface p-0 text-ink shadow-xl backdrop:bg-black/30"
       @cancel="model = false"
       @close="model = false"
       @click="

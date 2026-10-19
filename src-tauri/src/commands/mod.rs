@@ -3,6 +3,7 @@ use ime_types::{
     AppResult, AppSnapshot, Backup, Candidate, CandidatePage, EngineRequest, Settings, UserPhrase,
 };
 use tauri::State;
+pub mod native;
 
 #[tauri::command]
 pub fn get_snapshot(state: State<'_, AppState>) -> AppResult<AppSnapshot> {

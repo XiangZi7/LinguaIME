@@ -1,4 +1,4 @@
-use crate::normalize;
+use crate::{normalize, parser::PinyinInput};
 use ime_types::{AppResult, Candidate, CandidatePage, EngineRequest, SCHEMA_VERSION, UserPhrase};
 use std::collections::{BTreeMap, HashMap, HashSet};
 
@@ -36,8 +36,16 @@ impl PinyinEngine {
             });
             count += 1;
         }
-        let total: u64 = index.values().flatten().map(|entry| entry.frequency.max(1)).sum();
-        Self { index, count, log_total_frequency: (total.max(1) as f64).ln() }
+        let total: u64 = index
+            .values()
+            .flatten()
+            .map(|entry| entry.frequency.max(1))
+            .sum();
+        Self {
+            index,
+            count,
+            log_total_frequency: (total.max(1) as f64).ln(),
+        }
     }
 
     pub fn count(&self) -> usize {
@@ -50,13 +58,14 @@ impl PinyinEngine {
         phrases: &[UserPhrase],
         frequencies: &HashMap<String, u64>,
     ) -> AppResult<CandidatePage> {
-        let key = normalize(&request.composition)?;
+        let input = PinyinInput::parse(&request.composition)?;
+        let key = input.key.clone();
         let page_size = request.page_size.clamp(1, 9);
         let mut candidates: Vec<Candidate> = Vec::new();
         if !key.is_empty() {
             for phrase in phrases {
                 let reading = normalize(&phrase.reading)?;
-                if reading.starts_with(&key) {
+                if reading.starts_with(&key) && input.matches_reading(&phrase.reading) {
                     candidates.push(Candidate {
                         id: phrase.id.clone(),
                         text: phrase.text.clone(),
@@ -73,12 +82,17 @@ impl PinyinEngine {
                 if !entries[0].key.starts_with(&key) {
                     break;
                 }
-                candidates.extend(entries.iter().cloned());
+                candidates.extend(
+                    entries
+                        .iter()
+                        .filter(|entry| input.matches_reading(&entry.reading))
+                        .cloned(),
+                );
                 if candidates.len() >= 512 {
                     break;
                 }
             }
-            if let Some((text, weight)) = self.compose(&key)
+            if let Some((text, weight)) = self.compose(&input)
                 && !candidates.iter().any(|candidate| candidate.text == text)
             {
                 candidates.push(Candidate {
@@ -124,12 +138,16 @@ impl PinyinEngine {
         })
     }
 
-    fn compose(&self, key: &str) -> Option<(String, u64)> {
+    fn compose(&self, input: &PinyinInput) -> Option<(String, u64)> {
+        let key = &input.key;
         // Unigram log probabilities favor common words without fabricating a phrase translation.
         let mut paths: Vec<Option<(f64, String)>> = vec![None; key.len() + 1];
         paths[0] = Some((0.0, String::new()));
         for end in 1..=key.len() {
             for start in (0..end).rev().take(24) {
+                if input.crosses_boundary(start, end) {
+                    continue;
+                }
                 let Some((cost, prefix)) = &paths[start] else {
                     continue;
                 };
@@ -148,7 +166,12 @@ impl PinyinEngine {
                 }
             }
         }
-        paths.pop().flatten().map(|(score, text)| (text, (score + self.log_total_frequency).exp().round() as u64))
+        paths.pop().flatten().map(|(score, text)| {
+            (
+                text,
+                (score + self.log_total_frequency).exp().round() as u64,
+            )
+        })
     }
 }
 

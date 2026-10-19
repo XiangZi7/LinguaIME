@@ -26,6 +26,14 @@ public:
     HRESULT STDMETHODCALLTYPE OnPopContext(ITfContext*) override;
     HRESULT STDMETHODCALLTYPE OnCompositionTerminated(TfEditCookie, ITfComposition*) override;
     HRESULT edit(TfEditCookie, ITfContext*, const std::wstring&, bool commit, bool cancel);
+#ifdef LINGUA_TESTING
+    // The harness uses a real TSF context without claiming to be the OS-activated keyboard TIP.
+    HRESULT initialize_for_test(TfClientId id) {
+        client_id_=id;
+        engine_=lingua_create();
+        return engine_ && lingua_refresh(engine_,&config_)==0 ? S_OK : E_FAIL;
+    }
+#endif
 private:
     HRESULT request_edit(ITfContext*, std::wstring text, bool commit, bool cancel);
     void refresh_candidates();

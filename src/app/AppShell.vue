@@ -2,10 +2,10 @@
 import { storeToRefs } from 'pinia'
 import { computed, onBeforeUnmount, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { UiBadge, UiButton, UiEmptyState, UiIcon } from '@/components/ui'
-import { desktop } from '@/services'
+import { UiButton, UiEmptyState, UiIcon } from '@/components/ui'
 import { useAppStore } from '@/stores/app'
 import AppSidebar from './AppSidebar.vue'
+import AppTitlebar from './AppTitlebar.vue'
 import { NAVIGATION } from './navigation'
 const store = useAppStore()
 const { loading, error, dirty, saving, draft, notices } = storeToRefs(store)
@@ -42,33 +42,7 @@ onBeforeUnmount(() => {
   <div class="flex min-h-screen">
     <AppSidebar />
     <div class="min-w-0 flex-1">
-      <header
-        class="sticky top-0 z-20 flex h-[62px] items-center justify-between gap-3 border-b border-line bg-surface/95 px-9 backdrop-blur-sm max-lg:px-6 max-sm:px-4"
-      >
-        <div class="flex items-center gap-3 text-[11px]">
-          <span class="text-faint max-sm:hidden">个人工作台</span>
-          <span class="text-faint max-sm:hidden">/</span>
-          <span class="text-ink">{{ currentPage?.label }}</span>
-        </div>
-        <div class="flex items-center gap-4">
-          <UiBadge
-            :tone="desktop ? 'green' : 'amber'"
-            dot
-          >
-            {{ desktop ? '桌面管理端' : '浏览器预览' }}
-          </UiBadge>
-          <RouterLink
-            to="/about"
-            class="text-muted hover:text-accent"
-            aria-label="帮助与关于"
-          >
-            <UiIcon
-              name="info"
-              :size="17"
-            />
-          </RouterLink>
-        </div>
-      </header>
+      <AppTitlebar :page="currentPage?.label" />
       <main
         id="main-content"
         class="mx-auto max-w-[1360px] px-9 pt-8 pb-12 max-lg:px-6 max-sm:px-4"

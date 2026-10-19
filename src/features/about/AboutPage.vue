@@ -125,7 +125,8 @@ import { desktop } from '@/services'
           Vue · TypeScript · Tailwind CSS v4 · Pinia · Tauri 2 · Rust · SQLite
         </p>
         <p>
-          当前排序不含真实语料词频模型；未提供释义、词性或例句时，不显示推测结果。
+          静态词频来自
+          jieba（MIT），用于本地候选排序；不包含在线上下文模型。未提供释义、词性或例句时，不显示推测结果。
         </p>
       </div>
     </UiPanel>

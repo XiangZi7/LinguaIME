@@ -5,12 +5,34 @@ use std::{collections::HashMap, time::Instant};
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let start = Instant::now();
     let engine = PinyinEngine::default();
-    println!("{} dictionary entries; cold initialization {:?}", engine.count(), start.elapsed());
+    println!(
+        "{} dictionary entries; cold initialization {:?}",
+        engine.count(),
+        start.elapsed()
+    );
     let mut durations = Vec::new();
-    for key in ["nihao", "xuexi", "zhongwen", "woshi", "woshishuo", "jintian", "woaizhongguo"] {
-        let request = EngineRequest { composition: key.into(), page: 0, page_size: 7 };
+    for key in [
+        "nihao",
+        "xuexi",
+        "zhongwen",
+        "woshi",
+        "woshishuo",
+        "jintian",
+        "woaizhongguo",
+    ] {
+        let request = EngineRequest {
+            composition: key.into(),
+            page: 0,
+            page_size: 7,
+        };
         let page = engine.query(&request, &[], &HashMap::new())?;
-        println!("{key}: {:?}", page.items.iter().map(|entry| &entry.text).collect::<Vec<_>>());
+        println!(
+            "{key}: {:?}",
+            page.items
+                .iter()
+                .map(|entry| &entry.text)
+                .collect::<Vec<_>>()
+        );
         for _ in 0..100 {
             let start = Instant::now();
             std::hint::black_box(engine.query(&request, &[], &HashMap::new())?);
@@ -18,6 +40,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
     durations.sort();
-    println!("Warm query P95: {:?} (700 queries)", durations[durations.len()*95/100]);
+    println!(
+        "Warm query P95: {:?} (700 queries)",
+        durations[durations.len() * 95 / 100]
+    );
     Ok(())
 }

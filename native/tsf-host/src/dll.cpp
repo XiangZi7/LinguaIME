@@ -1,5 +1,19 @@
 #include "text_service.h"
 #include <new>
+#include <delayimp.h>
+
+namespace {
+FARPROC WINAPI load_rust_bridge(unsigned notification, PDelayLoadInfo info) {
+    if (notification!=dliNotePreLoadLibrary || strcmp(info->szDll,"ime_ffi.dll")!=0) return nullptr;
+    wchar_t path[MAX_PATH]{};
+    if (!GetModuleFileNameW(g_module,path,MAX_PATH)) return nullptr;
+    auto* separator=wcsrchr(path,L'\\');
+    if (!separator) return nullptr;
+    wcscpy_s(separator+1,static_cast<size_t>(path+MAX_PATH-separator-1),L"ime_ffi.dll");
+    return reinterpret_cast<FARPROC>(LoadLibraryExW(path,nullptr,LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR|LOAD_LIBRARY_SEARCH_DEFAULT_DIRS));
+}
+}
+extern "C" const PfnDliHook __pfnDliNotifyHook2=load_rust_bridge;
 
 HINSTANCE g_module=nullptr;
 std::atomic<long> g_objects{0};

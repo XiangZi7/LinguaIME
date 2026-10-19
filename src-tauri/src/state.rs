@@ -25,16 +25,4 @@ impl AppState {
     }
 }
 
-pub fn native_registered() -> bool {
-    #[cfg(windows)]
-    {
-        use std::os::windows::process::CommandExt;
-        std::process::Command::new("reg.exe")
-            .args(["query",r"HKCU\Software\Classes\CLSID\{49A6E853-66A7-45AC-981F-ECB7F74F50CF}\InprocServer32"])
-            .creation_flags(0x08000000).output().is_ok_and(|output| output.status.success())
-    }
-    #[cfg(not(windows))]
-    {
-        false
-    }
-}
+pub use crate::native_status::native_registered;
