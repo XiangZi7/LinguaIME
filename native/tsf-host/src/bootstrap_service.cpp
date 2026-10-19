@@ -143,6 +143,7 @@ HRESULT BootstrapService::CheckForUpdate() {
         retire(std::move(current_));
         current_ = std::move(candidate);
         failed_version_.clear();
+        SetWindowTextW(timer_window_, current_->version().c_str());
         collect_retired();
         return S_OK;
     } catch (...) {
@@ -157,7 +158,7 @@ HRESULT BootstrapService::start_timer() {
     klass.lpszClassName = kLoaderWindow;
     if (!RegisterClassExW(&klass) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
         return HRESULT_FROM_WIN32(GetLastError());
-    timer_window_ = CreateWindowExW(0, kLoaderWindow, L"", 0, 0, 0, 0, 0,
+    timer_window_ = CreateWindowExW(0, kLoaderWindow, current_->version().c_str(), 0, 0, 0, 0, 0,
                                    HWND_MESSAGE, nullptr, g_module, this);
     if (!timer_window_) return HRESULT_FROM_WIN32(GetLastError());
     return SetTimer(timer_window_, kUpdateTimer, 1000, nullptr) ? S_OK : E_FAIL;

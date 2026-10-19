@@ -29,8 +29,10 @@
     "active": true,
     "resources": {
       "../build/native/lingua_tsf.dll": "native/lingua_tsf.dll",
+      "../build/native/lingua_runtime.dll": "native/lingua_runtime.dll",
       "../build/native/ime_ffi.dll": "native/ime_ffi.dll",
-      "../scripts/register-ime.ps1": "native/register-ime.ps1"
+      "../scripts/register-ime.ps1": "native/register-ime.ps1",
+      "../scripts/native-update.ps1": "native/native-update.ps1"
     },
     "targets": "all",
     "icon": [

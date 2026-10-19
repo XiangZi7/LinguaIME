@@ -148,8 +148,18 @@ int main(int argument_count, char** arguments) {
             if (!eaten) throw std::runtime_error("letter not handled");
         }
         if (read(context.Get(),id)!=L"xuexi") throw std::runtime_error("composition text mismatch");
+        RuntimeState update_state{};
+        require(service->GetState(&update_state),"busy runtime state");
+        if (update_state.idle) throw std::runtime_error("runtime update allowed during composition");
         require(keys->OnKeyDown(context.Get(),VK_RETURN,0,&eaten),"commit");
         if (read(context.Get(),id)!=L"学习") throw std::runtime_error("committed text mismatch");
+        require(service->GetState(&update_state),"idle runtime state");
+        if (!update_state.idle) throw std::runtime_error("runtime not idle after commit");
+        {
+            RuntimeCall callback;
+            require(service->GetState(&update_state),"nested callback runtime state");
+            if (update_state.idle) throw std::runtime_error("runtime update allowed inside a callback");
+        }
         for (const char key : std::string("NIHAO")) require(keys->OnKeyDown(context.Get(),static_cast<WPARAM>(key),0,&eaten),"second composition");
         require(keys->OnKeyDown(context.Get(),VK_ESCAPE,0,&eaten),"cancel");
         if (read(context.Get(),id)!=L"学习") throw std::runtime_error("cancel changed committed text");

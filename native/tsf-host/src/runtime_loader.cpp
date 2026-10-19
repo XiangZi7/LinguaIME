@@ -48,9 +48,9 @@ RuntimeGeneration::~RuntimeGeneration() {
     if (try_unload() || !module_) return;
     // A client can retain a removed language-bar COM item. Keep its code valid until process exit.
     HMODULE pinned = nullptr;
-    GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_PIN,
-                      reinterpret_cast<LPCWSTR>(can_unload_), &pinned);
-    FreeLibrary(module_);
+    if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_PIN,
+                          reinterpret_cast<LPCWSTR>(can_unload_), &pinned))
+        FreeLibrary(module_);
 }
 
 HRESULT RuntimeGeneration::load(const std::filesystem::path& root) {

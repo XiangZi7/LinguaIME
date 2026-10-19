@@ -63,7 +63,13 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID) {
     if (reason==DLL_PROCESS_ATTACH) { g_module=instance; DisableThreadLibraryCalls(instance); }
     return TRUE;
 }
-STDAPI DllCanUnloadNow() { return g_objects==0?S_OK:S_FALSE; }
+STDAPI DllCanUnloadNow() {
+    if (g_objects != 0) return S_FALSE;
+#ifdef LINGUA_BOOTSTRAP
+    UnregisterClassW(L"LinguaIME.UpdateLoader.v1", g_module);
+#endif
+    return S_OK;
+}
 STDAPI DllGetClassObject(REFCLSID clsid, REFIID id, void** output) {
     if (clsid!=kClsid) return CLASS_E_CLASSNOTAVAILABLE;
 #ifndef LINGUA_BOOTSTRAP

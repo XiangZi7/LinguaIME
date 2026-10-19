@@ -170,6 +170,12 @@ test('custom titlebar controls use native window commands and installation refre
     page.getByText('已加入 Windows 输入法列表。', { exact: false })
   ).toBeVisible()
   await page
+    .getByRole('button', { name: '更新输入法组件', exact: true })
+    .click()
+  await expect(
+    page.getByRole('button', { name: '更新输入法组件', exact: true })
+  ).toBeEnabled()
+  await page
     .getByRole('navigation')
     .getByRole('link', { name: '输入设置' })
     .click()

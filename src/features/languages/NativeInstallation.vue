@@ -12,7 +12,9 @@ async function install(): Promise<void> {
   try {
     await service.installNative(false)
     await app.refresh()
-    app.notify('已安装并加入 Windows 输入法列表，按 Win + Space 切换')
+    app.notify(
+      '输入法组件已发布，支持自动更新的应用会在拼音提交或取消后加载；旧加载方式的应用需重开一次'
+    )
   } catch (error) {
     app.notify(errorMessage(error), 'error')
   } finally {
@@ -57,19 +59,29 @@ async function install(): Promise<void> {
   </div>
   <div
     v-else
-    class="flex items-start gap-2 rounded-lg bg-accent-wash p-3 text-[11px] leading-6 text-muted"
+    class="flex flex-wrap items-start gap-2 rounded-lg bg-accent-wash p-3 text-[11px] leading-6 text-muted"
   >
     <UiIcon
       name="check"
       :size="14"
       class="mt-1 text-accent"
     />
-    <span>
+    <span class="min-w-0 flex-1 basis-40">
       已加入 Windows 输入法列表。按
       <kbd class="keycap">Win</kbd>
       +
       <kbd class="keycap">Space</kbd>
-      选择 LinguaIME。关闭管理应用后仍可输入。
+      选择
+      LinguaIME。更新组件后会在输入空闲时加载；首次迁移到自动更新版本需重开目标应用一次。
     </span>
+    <UiButton
+      v-if="desktop"
+      variant="secondary"
+      size="sm"
+      :busy="busy"
+      @click="install"
+    >
+      {{ busy ? '正在发布…' : '更新输入法组件' }}
+    </UiButton>
   </div>
 </template>

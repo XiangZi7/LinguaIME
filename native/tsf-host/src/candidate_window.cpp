@@ -65,6 +65,7 @@ bool CandidateWindow::show(const std::string& composition, const LinguaPage& pag
 }
 
 LRESULT CALLBACK CandidateWindow::window_proc(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
+    RuntimeCall call;
     auto* self = reinterpret_cast<CandidateWindow*>(GetWindowLongPtrW(window, GWLP_USERDATA));
     if (message == WM_NCCREATE) {
         self = static_cast<CandidateWindow*>(reinterpret_cast<CREATESTRUCTW*>(lparam)->lpCreateParams);

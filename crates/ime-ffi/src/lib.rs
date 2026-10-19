@@ -234,6 +234,18 @@ pub unsafe extern "C" fn lingua_record(context: *mut EngineContext, id: *const c
 mod tests {
     use super::*;
     #[test]
+    fn cache_release_preserves_live_engines() {
+        let first = shared_engine();
+        let second = shared_engine();
+        assert!(Arc::ptr_eq(&first, &second));
+        lingua_release_cache();
+        let replacement = shared_engine();
+        assert!(!Arc::ptr_eq(&first, &replacement));
+        assert_eq!(first.count(), replacement.count());
+        assert!(first.count() > 100_000);
+    }
+
+    #[test]
     fn abi_layout_and_utf8_are_stable() {
         assert_eq!(std::mem::size_of::<FfiCandidate>(), 1536);
         assert_eq!(std::mem::size_of::<FfiPage>(), 13840);
