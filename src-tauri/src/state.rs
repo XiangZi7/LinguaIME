@@ -12,10 +12,16 @@ pub struct AppState {
 impl AppState {
     pub fn new() -> AppResult<Self> {
         let path = default_data_path();
-        Ok(Self { engine:PinyinEngine::default(),storage:Mutex::new(Storage::open(&path)?),data_path:path.to_string_lossy().into() })
+        Ok(Self {
+            engine: PinyinEngine::default(),
+            storage: Mutex::new(Storage::open(&path)?),
+            data_path: path.to_string_lossy().into(),
+        })
     }
     pub fn storage(&self) -> AppResult<MutexGuard<'_, Storage>> {
-        self.storage.lock().map_err(|_| AppError::new("STORAGE_LOCK", "存储服务不可用，请重新启动管理应用"))
+        self.storage
+            .lock()
+            .map_err(|_| AppError::new("STORAGE_LOCK", "存储服务不可用，请重新启动管理应用"))
     }
 }
 
@@ -28,5 +34,7 @@ pub fn native_registered() -> bool {
             .creation_flags(0x08000000).output().is_ok_and(|output| output.status.success())
     }
     #[cfg(not(windows))]
-    { false }
+    {
+        false
+    }
 }

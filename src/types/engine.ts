@@ -15,6 +15,20 @@ export interface CandidatePage {
   pageCount: number
   total: number
 }
-export interface EngineRequest { composition: string; page: number; pageSize: number }
-export interface UserPhrase { id: string; text: string; reading: string; translation: string | null }
-export interface LearningItem { candidate: Candidate; status: 'review' | 'mastered'; createdAt: number; updatedAt: number }
+export interface EngineRequest {
+  composition: string
+  page: number
+  pageSize: number
+}
+export interface UserPhrase {
+  id: string
+  text: string
+  reading: string
+  translation: string | null
+}
+export interface LearningItem {
+  candidate: Candidate
+  status: 'review' | 'mastered'
+  createdAt: number
+  updatedAt: number
+}

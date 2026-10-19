@@ -1,4 +1,10 @@
-import type { Candidate, LearningItem, UserPhrase, CandidatePage, EngineRequest } from './engine'
+import type {
+  Candidate,
+  CandidatePage,
+  EngineRequest,
+  LearningItem,
+  UserPhrase,
+} from './engine'
 import type { Settings } from './settings'
 
 export interface Statistics {
@@ -16,18 +22,30 @@ export interface AppSnapshot {
   nativeRegistered: boolean
   dataPath: string
 }
-export interface Backup { schemaVersion: number; settings: Settings; phrases: UserPhrase[]; learning: LearningItem[] }
-export interface AppService {
-  snapshot(): Promise<AppSnapshot>
-  query(request: EngineRequest): Promise<CandidatePage>
-  saveSettings(settings: Settings): Promise<void>
-  savePhrase(phrase: UserPhrase): Promise<void>
-  deletePhrase(id: string): Promise<void>
-  importPhrases(phrases: UserPhrase[]): Promise<number>
-  recordSelection(id: string): Promise<void>
-  saveLearning(candidate: Candidate, status: LearningItem['status']): Promise<void>
-  deleteLearning(id: string): Promise<void>
-  exportData(): Promise<Backup>
-  clearData(scope: string): Promise<void>
+export interface Backup {
+  schemaVersion: number
+  settings: Settings
+  phrases: UserPhrase[]
+  learning: LearningItem[]
 }
-export interface Notice { id: number; message: string; kind: 'success' | 'error' }
+export interface AppService {
+  snapshot: () => Promise<AppSnapshot>
+  query: (request: EngineRequest) => Promise<CandidatePage>
+  saveSettings: (settings: Settings) => Promise<void>
+  savePhrase: (phrase: UserPhrase) => Promise<void>
+  deletePhrase: (id: string) => Promise<void>
+  importPhrases: (phrases: UserPhrase[]) => Promise<number>
+  recordSelection: (id: string) => Promise<void>
+  saveLearning: (
+    candidate: Candidate,
+    status: LearningItem['status']
+  ) => Promise<void>
+  deleteLearning: (id: string) => Promise<void>
+  exportData: () => Promise<Backup>
+  clearData: (scope: string) => Promise<void>
+}
+export interface Notice {
+  id: number
+  message: string
+  kind: 'success' | 'error'
+}

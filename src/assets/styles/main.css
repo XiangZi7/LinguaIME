@@ -66,7 +66,10 @@
   --candidate-selected: #deebfc;
   --candidate-text: #233e62;
 }
-.dark [data-accent='blue'] { --candidate-selected: #2d405c; --candidate-text: #f0f5ff; }
+.dark [data-accent='blue'] {
+  --candidate-selected: #2d405c;
+  --candidate-text: #f0f5ff;
+}
 
 @theme inline {
   --color-surface: var(--surface);
@@ -94,26 +97,76 @@
 }
 
 @layer base {
-  body { margin: 0; min-width: 360px; }
-  button, input, select, textarea { font: inherit; }
-  button, a, input, select, textarea, [tabindex] { outline-offset: 4px; }
-  :focus-visible { outline: 2px solid var(--accent); }
-  ::selection { background: var(--candidate-selected); color: var(--candidate-text); }
-  button:disabled { cursor: not-allowed; }
-  a { text-decoration: none; }
-  dialog::backdrop { backdrop-filter: blur(3px); }
+  body {
+    margin: 0;
+    min-width: 360px;
+  }
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+  button,
+  a,
+  input,
+  select,
+  textarea,
+  [tabindex] {
+    outline-offset: 4px;
+  }
+  :focus-visible {
+    outline: 2px solid var(--accent);
+  }
+  ::selection {
+    background: var(--candidate-selected);
+    color: var(--candidate-text);
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  a {
+    text-decoration: none;
+  }
+  dialog::backdrop {
+    backdrop-filter: blur(3px);
+  }
 }
 @layer components {
-  .ui-button { @apply inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg border font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50; }
-  .ui-button--primary { @apply border-transparent bg-accent text-surface hover:bg-accent-hover; }
-  .ui-button--secondary { @apply border-line bg-surface text-ink hover:bg-subtle; }
-  .ui-button--ghost { @apply border-transparent bg-transparent text-muted hover:bg-subtle hover:text-ink; }
-  .ui-button--danger { @apply border-danger/20 bg-danger-soft text-danger hover:bg-danger/15; }
-  .field { @apply min-h-10 rounded-lg border border-line bg-surface px-3 text-[13px] text-ink placeholder:text-faint focus:border-accent; }
-  .field-label { @apply mb-2 block text-xs font-medium text-ink; }
-  .text-link { @apply inline-flex cursor-pointer items-center gap-1.5 text-xs font-medium text-accent hover:underline; }
-  .keycap { @apply inline-flex min-h-6 min-w-6 items-center justify-center rounded border border-line bg-surface px-1.5 text-[10px] leading-none font-medium text-muted shadow-[0_1px_0_var(--line)]; }
+  .ui-button {
+    @apply inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg border font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .ui-button--primary {
+    @apply border-transparent bg-accent text-surface hover:bg-accent-hover;
+  }
+  .ui-button--secondary {
+    @apply border-line bg-surface text-ink hover:bg-subtle;
+  }
+  .ui-button--ghost {
+    @apply border-transparent bg-transparent text-muted hover:bg-subtle hover:text-ink;
+  }
+  .ui-button--danger {
+    @apply border-danger/20 bg-danger-soft text-danger hover:bg-danger/15;
+  }
+  .field {
+    @apply min-h-10 rounded-lg border border-line bg-surface px-3 text-[13px] text-ink placeholder:text-faint focus:border-accent;
+  }
+  .field-label {
+    @apply mb-2 block text-xs font-medium text-ink;
+  }
+  .text-link {
+    @apply inline-flex cursor-pointer items-center gap-1.5 text-xs font-medium text-accent hover:underline;
+  }
+  .keycap {
+    @apply inline-flex min-h-6 min-w-6 items-center justify-center rounded border border-line bg-surface px-1.5 text-[10px] leading-none font-medium text-muted shadow-[0_1px_0_var(--line)];
+  }
 }
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

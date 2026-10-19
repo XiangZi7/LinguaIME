@@ -21,7 +21,10 @@ pub struct LearningItem {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct DailyCount { pub date: String, pub count: u64 }
+pub struct DailyCount {
+    pub date: String,
+    pub count: u64,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

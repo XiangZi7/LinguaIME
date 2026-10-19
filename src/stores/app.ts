@@ -1,6 +1,6 @@
+import type { AppSnapshot, Notice } from '@/types/app'
 import { acceptHMRUpdate, defineStore } from 'pinia'
 import { computed, reactive, toRefs } from 'vue'
-import type { AppSnapshot, Notice } from '@/types/app'
 import { DEFAULT_SETTINGS } from '@/constants/settings'
 import { errorMessage, service } from '@/services'
 
@@ -20,30 +20,52 @@ export const useAppStore = defineStore('app', () => {
     // 全局操作反馈
     notices: [] as Notice[],
   })
-  const dirty = computed(() => !!state.snapshot && JSON.stringify(state.draft) !== JSON.stringify(state.snapshot.settings))
+  const dirty = computed(
+    () =>
+      !!state.snapshot &&
+      JSON.stringify(state.draft) !== JSON.stringify(state.snapshot.settings)
+  )
   function notify(message: string, kind: Notice['kind'] = 'success'): void {
     const id = Date.now() + Math.random()
     state.notices.push({ id, message, kind })
-    setTimeout(() => { state.notices = state.notices.filter(item => item.id !== id) }, 5000)
+    setTimeout(() => {
+      state.notices = state.notices.filter(item => item.id !== id)
+    }, 5000)
   }
   async function refresh(resetDraft = false): Promise<void> {
     const snapshot = await service.snapshot()
-    if (!state.snapshot || resetDraft) Object.assign(state.draft, snapshot.settings)
+    if (!state.snapshot || resetDraft)
+      Object.assign(state.draft, snapshot.settings)
     state.snapshot = snapshot
   }
   async function initialize(): Promise<void> {
-    state.loading = true; state.error = ''
-    try { await refresh(true) } catch (error) { state.error = errorMessage(error) }
-    finally { state.loading = false }
+    state.loading = true
+    state.error = ''
+    try {
+      await refresh(true)
+    } catch (error) {
+      state.error = errorMessage(error)
+    } finally {
+      state.loading = false
+    }
   }
   async function save(): Promise<void> {
     if (state.saving) return
     state.saving = true
-    try { await service.saveSettings({ ...state.draft }); await refresh(); notify('设置已保存，下次开始组合输入时生效') }
-    catch (error) { notify(errorMessage(error), 'error') }
-    finally { state.saving = false }
+    try {
+      await service.saveSettings({ ...state.draft })
+      await refresh()
+      notify('设置已保存，下次开始组合输入时生效')
+    } catch (error) {
+      notify(errorMessage(error), 'error')
+    } finally {
+      state.saving = false
+    }
   }
-  function discard(): void { if (state.snapshot) Object.assign(state.draft, state.snapshot.settings) }
+  function discard(): void {
+    if (state.snapshot) Object.assign(state.draft, state.snapshot.settings)
+  }
   return { ...toRefs(state), dirty, initialize, refresh, save, discard, notify }
 })
-if (import.meta.hot) import.meta.hot.accept(acceptHMRUpdate(useAppStore, import.meta.hot))
+if (import.meta.hot)
+  import.meta.hot.accept(acceptHMRUpdate(useAppStore, import.meta.hot))

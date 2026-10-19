@@ -14,11 +14,20 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            commands::get_snapshot, commands::query_candidates, commands::save_settings,
-            commands::save_phrase, commands::delete_phrase, commands::import_phrases,
-            commands::record_selection, commands::save_learning, commands::delete_learning,
-            commands::export_data, commands::clear_data,
+            commands::get_snapshot,
+            commands::query_candidates,
+            commands::save_settings,
+            commands::save_phrase,
+            commands::delete_phrase,
+            commands::import_phrases,
+            commands::record_selection,
+            commands::save_learning,
+            commands::delete_learning,
+            commands::export_data,
+            commands::clear_data,
         ])
         .run(tauri::generate_context!());
-    if result.is_err() { eprintln!("LinguaIME: DESKTOP_START_FAILED"); }
+    if result.is_err() {
+        eprintln!("LinguaIME: DESKTOP_START_FAILED");
+    }
 }

@@ -14,4 +14,8 @@ export interface Settings {
   previousPageKey: '-' | 'PageUp' | '['
   nextPageKey: '=' | 'PageDown' | ']'
 }
-export interface SelectOption { value: string | number; label: string; disabled?: boolean }
+export interface SelectOption {
+  value: string | number
+  label: string
+  disabled?: boolean
+}

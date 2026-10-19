@@ -1,9 +1,108 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { useAppStore } from '@/stores/app'
+import {
+  UiIcon,
+  UiPageHeader,
+  UiPanel,
+  UiSegmented,
+  UiSelect,
+  UiSettingRow,
+} from '@/components/ui'
 import { DISPLAY_OPTIONS, THEME_OPTIONS } from '@/constants/settings'
-import { UiPageHeader, UiPanel, UiSettingRow, UiSegmented, UiSelect, UiIcon } from '@/components/ui'
 import CandidatePlayground from '@/features/candidate/CandidatePlayground.vue'
+import { useAppStore } from '@/stores/app'
 const { draft } = storeToRefs(useAppStore())
 </script>
-<template><UiPageHeader title="外观" description="舒适、清晰，保留属于你的输入节奏。" eyebrow="A LITTLE MORE YOU" /><div class="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_400px]"><div class="space-y-5"><UiPanel title="主题"><UiSettingRow title="应用主题" description="实时预览；保存后同步到原生候选窗口。"><UiSegmented v-model="draft.theme" label="应用主题" :options="THEME_OPTIONS" /></UiSettingRow><UiSettingRow title="候选高亮" description="用柔和色彩，指引每一次选择。"><div class="flex gap-2"><button v-for="color in (['green', 'blue'] as const)" :key="color" type="button" :aria-label="color === 'green' ? '浅绿高亮' : '浅蓝高亮'" :aria-pressed="draft.accent === color" class="grid size-9 cursor-pointer place-items-center rounded-full border-2" :class="[color === 'green' ? 'bg-[#dcebc8] text-[#477553]' : 'bg-[#deebfc] text-[#436b9b]', draft.accent === color ? 'border-current' : 'border-transparent']" @click="draft.accent = color"><UiIcon v-if="draft.accent === color" name="check" :size="17" /></button></div></UiSettingRow></UiPanel><UiPanel title="候选窗口"><UiSettingRow title="显示模式"><UiSelect v-model="draft.displayMode" label="候选显示模式" :options="DISPLAY_OPTIONS" /></UiSettingRow><UiSettingRow title="中文字号" description="按逻辑像素设置，原生窗口随 DPI 缩放。"><UiSelect v-model="draft.fontSize" label="中文字号" :options="[14, 15, 16, 17, 18, 19, 20, 21, 22].map(value => ({ value, label: `${value} px` }))" /></UiSettingRow><UiSettingRow title="候选行距"><UiSegmented v-model="draft.rowSpacing" label="候选行距" :options="[{ value: 'compact', label: '紧凑' }, { value: 'comfortable', label: '舒适' }]" /></UiSettingRow></UiPanel></div><div class="xl:sticky xl:top-[86px]"><CandidatePlayground compact /><p class="mt-3 px-1 text-[11px] leading-6 text-muted">预览与你的设置实时同步。候选内容来自本地词典，不会发送到网络。</p></div></div></template>
+<template>
+  <UiPageHeader
+    title="外观"
+    description="舒适、清晰，保留属于你的输入节奏。"
+    eyebrow="A LITTLE MORE YOU"
+  />
+  <div class="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_400px]">
+    <div class="space-y-5">
+      <UiPanel title="主题">
+        <UiSettingRow
+          title="应用主题"
+          description="实时预览；保存后同步到原生候选窗口。"
+        >
+          <UiSegmented
+            v-model="draft.theme"
+            label="应用主题"
+            :options="THEME_OPTIONS"
+          />
+        </UiSettingRow>
+        <UiSettingRow
+          title="候选高亮"
+          description="用柔和色彩，指引每一次选择。"
+        >
+          <div class="flex gap-2">
+            <button
+              v-for="color in ['green', 'blue'] as const"
+              :key="color"
+              type="button"
+              :aria-label="color === 'green' ? '浅绿高亮' : '浅蓝高亮'"
+              :aria-pressed="draft.accent === color"
+              class="grid size-9 cursor-pointer place-items-center rounded-full border-2"
+              :class="[
+                color === 'green'
+                  ? 'bg-[#dcebc8] text-[#477553]'
+                  : 'bg-[#deebfc] text-[#436b9b]',
+                draft.accent === color
+                  ? 'border-current'
+                  : 'border-transparent',
+              ]"
+              @click="draft.accent = color"
+            >
+              <UiIcon
+                v-if="draft.accent === color"
+                name="check"
+                :size="17"
+              />
+            </button>
+          </div>
+        </UiSettingRow>
+      </UiPanel>
+      <UiPanel title="候选窗口">
+        <UiSettingRow title="显示模式">
+          <UiSelect
+            v-model="draft.displayMode"
+            label="候选显示模式"
+            :options="DISPLAY_OPTIONS"
+          />
+        </UiSettingRow>
+        <UiSettingRow
+          title="中文字号"
+          description="按逻辑像素设置，原生窗口随 DPI 缩放。"
+        >
+          <UiSelect
+            v-model="draft.fontSize"
+            label="中文字号"
+            :options="
+              [14, 15, 16, 17, 18, 19, 20, 21, 22].map(value => ({
+                value,
+                label: `${value} px`,
+              }))
+            "
+          />
+        </UiSettingRow>
+        <UiSettingRow title="候选行距">
+          <UiSegmented
+            v-model="draft.rowSpacing"
+            label="候选行距"
+            :options="[
+              { value: 'compact', label: '紧凑' },
+              { value: 'comfortable', label: '舒适' },
+            ]"
+          />
+        </UiSettingRow>
+      </UiPanel>
+    </div>
+    <div class="xl:sticky xl:top-[86px]">
+      <CandidatePlayground compact />
+      <p class="mt-3 px-1 text-[11px] leading-6 text-muted">
+        预览与你的设置实时同步。候选内容来自本地词典，不会发送到网络。
+      </p>
+    </div>
+  </div>
+</template>

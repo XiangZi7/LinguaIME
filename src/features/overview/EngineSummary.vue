@@ -1,7 +1,99 @@
 <script setup lang="ts">
-import { useAppStore } from '@/stores/app'
 import { UiBadge, UiIcon, UiPanel } from '@/components/ui'
 import { desktop } from '@/services'
+import { useAppStore } from '@/stores/app'
 const app = useAppStore()
 </script>
-<template><div class="space-y-5"><UiPanel title="引擎与词典"><div class="px-5 py-5"><div class="flex items-center gap-3"><span class="grid size-10 place-items-center rounded-lg bg-accent-soft text-lg font-medium text-accent">中</span><div><p class="text-[13px] font-semibold">中文拼音引擎</p><p class="mt-1 text-[10px] text-faint">Lingua Core · v0.1.0</p></div></div><dl class="mt-5 space-y-3 text-[11px]"><div class="flex justify-between gap-2"><dt class="text-muted">默认输入方案</dt><dd class="text-ink">简体中文 · 全拼</dd></div><div class="flex items-center justify-between gap-2"><dt class="text-muted">原生输入法</dt><dd><UiBadge :tone="app.snapshot?.nativeRegistered ? 'green' : 'amber'" dot>{{ app.snapshot?.nativeRegistered ? '已注册 · 待验证' : desktop ? '尚未注册' : '预览模式' }}</UiBadge></dd></div><div class="flex justify-between gap-2"><dt class="text-muted">系统词典</dt><dd class="text-ink">CC-CEDICT</dd></div><div class="flex justify-between gap-2"><dt class="text-muted">运行方式</dt><dd class="text-accent">本地离线</dd></div></dl><RouterLink to="/languages" class="text-link mt-5">管理语言与引擎<UiIcon name="arrow" :size="13" /></RouterLink></div></UiPanel><UiPanel title="让双手，专注表达"><div class="space-y-4 px-5 py-5 text-[11px]"><div class="flex items-center justify-between"><span class="text-muted">切换系统输入法</span><span class="flex items-center gap-1"><kbd class="keycap">Win</kbd><span class="text-faint">+</span><kbd class="keycap">Space</kbd></span></div><div class="flex items-center justify-between"><span class="text-muted">选择候选词</span><kbd class="keycap">1 – 9</kbd></div><div class="flex items-center justify-between"><span class="text-muted">翻页候选</span><span class="flex gap-1"><kbd class="keycap">{{ app.draft.previousPageKey }}</kbd><kbd class="keycap">{{ app.draft.nextPageKey }}</kbd></span></div><RouterLink to="/shortcuts" class="text-link">查看全部快捷键<UiIcon name="arrow" :size="13" /></RouterLink></div></UiPanel></div></template>
+<template>
+  <div class="space-y-5">
+    <UiPanel title="引擎与词典">
+      <div class="px-5 py-5">
+        <div class="flex items-center gap-3">
+          <span
+            class="grid size-10 place-items-center rounded-lg bg-accent-soft text-lg font-medium text-accent"
+          >
+            中
+          </span>
+          <div>
+            <p class="text-[13px] font-semibold">中文拼音引擎</p>
+            <p class="mt-1 text-[10px] text-faint">Lingua Core · v0.1.0</p>
+          </div>
+        </div>
+        <dl class="mt-5 space-y-3 text-[11px]">
+          <div class="flex justify-between gap-2">
+            <dt class="text-muted">默认输入方案</dt>
+            <dd class="text-ink">简体中文 · 全拼</dd>
+          </div>
+          <div class="flex items-center justify-between gap-2">
+            <dt class="text-muted">原生输入法</dt>
+            <dd>
+              <UiBadge
+                :tone="app.snapshot?.nativeRegistered ? 'green' : 'amber'"
+                dot
+              >
+                {{
+                  app.snapshot?.nativeRegistered
+                    ? '已注册 · 待验证'
+                    : desktop
+                      ? '尚未注册'
+                      : '预览模式'
+                }}
+              </UiBadge>
+            </dd>
+          </div>
+          <div class="flex justify-between gap-2">
+            <dt class="text-muted">系统词典</dt>
+            <dd class="text-ink">CC-CEDICT</dd>
+          </div>
+          <div class="flex justify-between gap-2">
+            <dt class="text-muted">运行方式</dt>
+            <dd class="text-accent">本地离线</dd>
+          </div>
+        </dl>
+        <RouterLink
+          to="/languages"
+          class="text-link mt-5"
+        >
+          管理语言与引擎
+          <UiIcon
+            name="arrow"
+            :size="13"
+          />
+        </RouterLink>
+      </div>
+    </UiPanel>
+    <UiPanel title="让双手，专注表达">
+      <div class="space-y-4 px-5 py-5 text-[11px]">
+        <div class="flex items-center justify-between">
+          <span class="text-muted">切换系统输入法</span>
+          <span class="flex items-center gap-1">
+            <kbd class="keycap">Win</kbd>
+            <span class="text-faint">+</span>
+            <kbd class="keycap">Space</kbd>
+          </span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-muted">选择候选词</span>
+          <kbd class="keycap">1 – 9</kbd>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-muted">翻页候选</span>
+          <span class="flex gap-1">
+            <kbd class="keycap">{{ app.draft.previousPageKey }}</kbd>
+            <kbd class="keycap">{{ app.draft.nextPageKey }}</kbd>
+          </span>
+        </div>
+        <RouterLink
+          to="/shortcuts"
+          class="text-link"
+        >
+          查看全部快捷键
+          <UiIcon
+            name="arrow"
+            :size="13"
+          />
+        </RouterLink>
+      </div>
+    </UiPanel>
+  </div>
+</template>

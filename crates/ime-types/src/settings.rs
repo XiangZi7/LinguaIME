@@ -21,12 +21,18 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            display_mode: "bilingual".into(), page_size: 7,
-            auto_learn: true, collect_stats: false,
-            theme: "system".into(), accent: "green".into(), font_size: 17,
-            row_spacing: "comfortable".into(), chinese_punctuation: true,
+            display_mode: "bilingual".into(),
+            page_size: 7,
+            auto_learn: true,
+            collect_stats: false,
+            theme: "system".into(),
+            accent: "green".into(),
+            font_size: 17,
+            row_spacing: "comfortable".into(),
+            chinese_punctuation: true,
             enter_behavior: "candidate".into(),
-            previous_page_key: "-".into(), next_page_key: "=".into(),
+            previous_page_key: "-".into(),
+            next_page_key: "=".into(),
         }
     }
 }
@@ -42,6 +48,10 @@ impl Settings {
             && ["candidate", "raw"].contains(&self.enter_behavior.as_str())
             && ["-", "PageUp", "["].contains(&self.previous_page_key.as_str())
             && ["=", "PageDown", "]"].contains(&self.next_page_key.as_str());
-        if valid { Ok(()) } else { Err(AppError::new("INVALID_SETTINGS", "设置值不在允许范围内")) }
+        if valid {
+            Ok(())
+        } else {
+            Err(AppError::new("INVALID_SETTINGS", "设置值不在允许范围内"))
+        }
     }
 }

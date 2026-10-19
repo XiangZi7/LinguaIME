@@ -1,8 +1,8 @@
-import { onBeforeUnmount, reactive, toRefs, watch } from 'vue'
-import { useAppStore } from '@/stores/app'
-import { EMPTY_PAGE } from '@/constants/settings'
 import type { Candidate, CandidatePage } from '@/types/engine'
-import { service, errorMessage } from '@/services'
+import { onBeforeUnmount, reactive, toRefs, watch } from 'vue'
+import { EMPTY_PAGE } from '@/constants/settings'
+import { errorMessage, service } from '@/services'
+import { useAppStore } from '@/stores/app'
 
 export function useCandidatePreview() {
   const app = useAppStore()
@@ -25,44 +25,104 @@ export function useCandidatePreview() {
   let timer: ReturnType<typeof setTimeout> | undefined
   async function query(page = 0): Promise<void> {
     const id = ++requestId
-    state.loading = true; state.error = ''
+    state.loading = true
+    state.error = ''
     try {
-      const result = await service.query({ composition: state.composition, page, pageSize: app.draft.pageSize })
+      const result = await service.query({
+        composition: state.composition,
+        page,
+        pageSize: app.draft.pageSize,
+      })
       if (id !== requestId) return
-      state.page = result; state.selected = 0
-    } catch (error) { if (id === requestId) { state.error = errorMessage(error); state.page = { ...EMPTY_PAGE } } }
-    finally { if (id === requestId) state.loading = false }
+      state.page = result
+      state.selected = 0
+    } catch (error) {
+      if (id === requestId) {
+        state.error = errorMessage(error)
+        state.page = { ...EMPTY_PAGE }
+      }
+    } finally {
+      if (id === requestId) state.loading = false
+    }
   }
-  watch([() => state.composition, () => app.draft.pageSize], () => {
+  watch(
+    [() => state.composition, () => app.draft.pageSize],
+    () => {
+      ++requestId
+      clearTimeout(timer)
+      state.loading = true
+      timer = setTimeout(() => {
+        void query()
+      }, 70)
+    },
+    { immediate: true }
+  )
+  onBeforeUnmount(() => {
     ++requestId
     clearTimeout(timer)
-    state.loading = true
-    timer = setTimeout(() => { void query() }, 70)
-  }, { immediate: true })
-  onBeforeUnmount(() => { ++requestId; clearTimeout(timer) })
+  })
   async function choose(candidate: Candidate): Promise<void> {
     if (state.loading) return
     state.committed += candidate.text
     state.composition = ''
     state.page = { ...EMPTY_PAGE }
-    try { await service.recordSelection(candidate.id); await app.refresh() }
-    catch (error) { app.notify(errorMessage(error), 'error') }
+    try {
+      await service.recordSelection(candidate.id)
+      await app.refresh()
+    } catch (error) {
+      app.notify(errorMessage(error), 'error')
+    }
   }
   function turnPage(direction: number): void {
     const index = state.page.pageIndex + direction
-    if (!state.loading && index >= 0 && index < state.page.pageCount) void query(index)
+    if (!state.loading && index >= 0 && index < state.page.pageCount)
+      void query(index)
   }
   function onKeydown(event: KeyboardEvent): void {
-    if (event.isComposing || event.ctrlKey || event.altKey || event.metaKey || !state.composition) return
-    if (event.key === 'Escape') { event.preventDefault(); state.composition = ''; return }
+    if (
+      event.isComposing ||
+      event.ctrlKey ||
+      event.altKey ||
+      event.metaKey ||
+      !state.composition
+    )
+      return
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      state.composition = ''
+      return
+    }
     if (state.loading) return
-    if (event.key === app.draft.previousPageKey || event.key === app.draft.nextPageKey) { event.preventDefault(); turnPage(event.key === app.draft.previousPageKey ? -1 : 1); return }
+    if (
+      event.key === app.draft.previousPageKey ||
+      event.key === app.draft.nextPageKey
+    ) {
+      event.preventDefault()
+      turnPage(event.key === app.draft.previousPageKey ? -1 : 1)
+      return
+    }
     const count = state.page.items.length
-    if (count && ['ArrowUp', 'ArrowDown'].includes(event.key)) { event.preventDefault(); state.selected = (state.selected + count + (event.key === 'ArrowUp' ? -1 : 1)) % count }
-    if (event.key === 'Enter' && app.draft.enterBehavior === 'raw') { event.preventDefault(); state.committed += state.composition; state.composition = ''; return }
-    const index = /^[1-9]$/.test(event.key) ? Number(event.key) - 1 : ['Enter', ' '].includes(event.key) ? state.selected : -1
+    if (count && ['ArrowUp', 'ArrowDown'].includes(event.key)) {
+      event.preventDefault()
+      state.selected =
+        (state.selected + count + (event.key === 'ArrowUp' ? -1 : 1)) % count
+    }
+    if (event.key === 'Enter' && app.draft.enterBehavior === 'raw') {
+      event.preventDefault()
+      state.committed += state.composition
+      state.composition = ''
+      return
+    }
+    const index = /^[1-9]$/.test(event.key)
+      ? Number(event.key) - 1
+      : ['Enter', ' '].includes(event.key)
+        ? state.selected
+        : -1
     const candidate = state.page.items[index]
-    if (candidate) { event.preventDefault(); void choose(candidate) }
+    if (candidate) {
+      event.preventDefault()
+      void choose(candidate)
+    }
   }
   return { ...toRefs(state), query, choose, turnPage, onKeydown }
 }

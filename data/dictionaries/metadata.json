@@ -3,8 +3,8 @@
   "license": "CC BY-SA 4.0",
   "url": "https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.txt.gz",
   "attribution": "CC-CEDICT contributors; original CEDICT by Paul Denisowski; distributed by MDBG",
-  "sha256": "2680af828c0d949b544c9399b4dc8503788c99150ab73887600fed6b4f880b26",
-  "entries": 121198,
+  "sha256": "2d42d41f75df8708d9d9b236d8ae15ecf1cef525aef8ebb8499a74cb09e1b096",
+  "entries": 121202,
   "previewEntries": 699,
   "sourceHeader": [
     "# CC-CEDICT",
@@ -32,11 +32,17 @@
     "#! subversion=0",
     "#! format=ts",
     "#! charset=UTF-8",
-    "#! entries=125297",
+    "#! entries=125301",
     "#! publisher=MDBG",
     "#! license=https://creativecommons.org/licenses/by-sa/4.0/",
-    "#! date=2026-10-17T16:45:37Z",
-    "#! time=1792255537"
+    "#! date=2026-10-19T05:01:26Z",
+    "#! time=1792386086"
   ],
-  "modifications": "Simplified Han-only entries; tone-free lookup keys; first English sense; stable SHA-256 IDs. No fabricated POS or usage-frequency data."
+  "modifications": "Simplified Han-only entries; tone-free lookup keys; first English sense; stable SHA-256 IDs. POS omitted. Frequency from jieba dictionary; missing frequencies use neutral weight 1.",
+  "frequencySource": {
+    "url": "https://raw.githubusercontent.com/fxsjy/jieba/master/jieba/dict.txt",
+    "license": "MIT",
+    "author": "Sun Junyi / jieba contributors",
+    "sha256": "7197c3211ddd98962b036cdf40324d1ea2bfaa12bd028e68faa70111a88e12a8"
+  }
 }

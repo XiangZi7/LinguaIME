@@ -33,7 +33,9 @@ pub struct FfiConfig {
 pub fn copy_utf8<const N: usize>(text: &str) -> [u8; N] {
     let mut buffer = [0; N];
     let mut length = text.len().min(N.saturating_sub(1));
-    while !text.is_char_boundary(length) { length -= 1; }
+    while !text.is_char_boundary(length) {
+        length -= 1;
+    }
     buffer[..length].copy_from_slice(&text.as_bytes()[..length]);
     buffer
 }
