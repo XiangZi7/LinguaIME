@@ -1,30 +1,40 @@
 <script setup lang="ts">
-import { shallowRef } from 'vue'
 import { UiButton, UiIcon } from '@/components/ui'
-import { desktop, errorMessage, service } from '@/services'
+import { desktop } from '@/services'
 import { useAppStore } from '@/stores/app'
+import { useNativeInstallationStore } from '@/stores/native-installation'
 withDefaults(defineProps<{ compact?: boolean }>(), { compact: false })
 const app = useAppStore()
-const busy = shallowRef(false)
-async function install(): Promise<void> {
-  if (busy.value) return
-  busy.value = true
-  try {
-    await service.installNative(false)
-    await app.refresh()
-    app.notify(
-      '输入法组件已发布，支持自动更新的应用会在拼音提交或取消后加载；旧加载方式的应用需重开一次'
-    )
-  } catch (error) {
-    app.notify(errorMessage(error), 'error')
-  } finally {
-    busy.value = false
-  }
-}
+const native = useNativeInstallationStore()
 </script>
 <template>
   <div
-    v-if="!app.snapshot?.nativeRegistered"
+    v-if="native.busy"
+    role="status"
+    class="rounded-lg bg-accent-wash p-3.5 text-xs leading-6 text-muted"
+  >
+    <p class="font-medium text-accent">正在同步系统输入法…</p>
+    <p class="mt-1">
+      每次启动自动检查并安装当前版本；首次注册可能需要 Windows 管理员授权。
+    </p>
+  </div>
+  <div
+    v-else-if="native.status.phase === 'failed'"
+    role="alert"
+    class="rounded-lg border border-warning/15 bg-warning-soft p-3.5 text-xs leading-6 text-warning"
+  >
+    <p class="font-medium">输入法自动更新未完成</p>
+    <p class="mt-1">{{ native.status.error?.message }}</p>
+    <UiButton
+      class="mt-3"
+      size="sm"
+      @click="native.install"
+    >
+      重试更新
+    </UiButton>
+  </div>
+  <div
+    v-else-if="!app.snapshot?.nativeRegistered"
     class="rounded-lg border border-warning/15 bg-warning-soft p-3.5"
   >
     <p class="flex items-center gap-2 text-xs font-medium text-warning">
@@ -37,7 +47,7 @@ async function install(): Promise<void> {
     <p class="mt-2 text-[11px] leading-6 text-muted">
       {{
         desktop
-          ? '管理应用与系统输入法独立。安装后才能在 Windows 输入法列表中选择 LinguaIME。'
+          ? '安装后即可在 Windows 输入法列表中选择 LinguaIME，之后每次启动会自动检查更新。'
           : '浏览器仅用于界面预览。请使用 Windows 桌面管理端安装系统输入法。'
       }}
     </p>
@@ -47,14 +57,13 @@ async function install(): Promise<void> {
       variant="primary"
       size="sm"
       :disabled="!desktop"
-      :busy="busy"
-      @click="install"
+      @click="native.install"
     >
       <UiIcon
         name="download"
         :size="14"
       />
-      {{ busy ? '正在安装与注册…' : '安装到 Windows 输入法' }}
+      安装到 Windows 输入法
     </UiButton>
   </div>
   <div
@@ -72,16 +81,15 @@ async function install(): Promise<void> {
       +
       <kbd class="keycap">Space</kbd>
       选择
-      LinguaIME。更新组件后会在输入空闲时加载；首次迁移到自动更新版本需重开目标应用一次。
+      LinguaIME。每次启动管理端自动同步当前版本，输入空闲时加载。首次迁移需完全退出旧应用后重开一次。
     </span>
     <UiButton
       v-if="desktop"
       variant="secondary"
       size="sm"
-      :busy="busy"
-      @click="install"
+      @click="native.install"
     >
-      {{ busy ? '正在发布…' : '更新输入法组件' }}
+      更新输入法组件
     </UiButton>
   </div>
 </template>

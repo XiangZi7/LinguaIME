@@ -7,6 +7,10 @@ public static class LinguaRuntimeFiles {
   [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)]
   [return: MarshalAs(UnmanagedType.Bool)]
   public static extern bool MoveFileEx(string source, string target, uint flags);
+  [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)]
+  [return: MarshalAs(UnmanagedType.Bool)]
+  public static extern bool ReplaceFile(string target, string source, System.IntPtr backup,
+      uint flags, System.IntPtr exclude, System.IntPtr reserved);
 }
 '@
 }
@@ -42,7 +46,12 @@ function Write-LinguaRuntimeRecord([string]$Path, [string]$Record) {
     try { $stream.Write($bytes, 0, $bytes.Length); $stream.Flush($true) }
     finally { $stream.Dispose() }
     # Rename on the same volume. Readers share delete access and see the old or the complete new file.
-    if (![LinguaRuntimeFiles]::MoveFileEx($temporary, $Path, 9)) {
+    $published = if (Test-Path -LiteralPath $Path) {
+      [LinguaRuntimeFiles]::ReplaceFile($Path, $temporary, [IntPtr]::Zero, 2, [IntPtr]::Zero, [IntPtr]::Zero)
+    } else {
+      [LinguaRuntimeFiles]::MoveFileEx($temporary, $Path, 8)
+    }
+    if (!$published) {
       throw "Could not publish the runtime pointer (Windows code $([Runtime.InteropServices.Marshal]::GetLastWin32Error()))."
     }
   } finally {
@@ -50,9 +59,23 @@ function Write-LinguaRuntimeRecord([string]$Path, [string]$Record) {
   }
 }
 
+function Get-LinguaFileHash([string]$Path) {
+  # Windows PowerShell child processes may inherit incompatible PowerShell 7 module paths.
+  # Use the shared .NET API so hashing does not depend on importing Get-FileHash.
+  $algorithm = [Security.Cryptography.SHA256]::Create()
+  $stream = $null
+  try {
+    $stream = [IO.File]::OpenRead($Path)
+    return [BitConverter]::ToString($algorithm.ComputeHash($stream)).Replace('-', '')
+  } finally {
+    if ($stream) { $stream.Dispose() }
+    $algorithm.Dispose()
+  }
+}
+
 function Copy-LinguaImmutableFile([string]$Source, [string]$Target, [string]$ExpectedHash) {
   if (!(Test-Path -LiteralPath $Target)) { Copy-Item -LiteralPath $Source -Destination $Target }
-  if ((Get-FileHash -LiteralPath $Target).Hash -ne $ExpectedHash) {
+  if ((Get-LinguaFileHash $Target) -ne $ExpectedHash) {
     throw "Installed native file failed verification: $Target"
   }
 }
@@ -65,9 +88,9 @@ function Stage-LinguaRuntime([string]$SourceDirectory, [string]$StateDirectory) 
     foreach ($source in @($sourceHost, $sourceRuntime, $sourceCore)) {
       if (!(Test-Path -LiteralPath $source)) { throw 'Native binaries are missing. Run pnpm native:build first.' }
     }
-    $hostHash = (Get-FileHash -LiteralPath $sourceHost).Hash
-    $runtimeHash = (Get-FileHash -LiteralPath $sourceRuntime).Hash
-    $coreHash = (Get-FileHash -LiteralPath $sourceCore).Hash
+    $hostHash = Get-LinguaFileHash $sourceHost
+    $runtimeHash = Get-LinguaFileHash $sourceRuntime
+    $coreHash = Get-LinguaFileHash $sourceCore
     $version = $runtimeHash + '-' + $coreHash
     $hostDirectory = Join-Path $StateDirectory "host-v1-$hostHash"
     $runtimeDirectory = Join-Path $StateDirectory "runtime\$version"
@@ -103,6 +126,11 @@ function Undo-LinguaRuntimeUpdate([string]$StateDirectory) {
     if (!(Test-Path -LiteralPath (Join-Path $directory 'lingua_runtime.dll')) -or
         !(Test-Path -LiteralPath (Join-Path $directory 'ime_ffi.dll'))) {
       throw 'The previous runtime is incomplete. Reinstall a known good version.'
+    }
+    $hashes = $version -split '-'
+    if ((Get-LinguaFileHash (Join-Path $directory 'lingua_runtime.dll')) -ne $hashes[0] -or
+        (Get-LinguaFileHash (Join-Path $directory 'ime_ffi.dll')) -ne $hashes[1]) {
+      throw 'The previous runtime failed verification. Reinstall a known good version.'
     }
     Write-LinguaRuntimeRecord $previousPath $current
     Write-LinguaRuntimeRecord $activePath $previous

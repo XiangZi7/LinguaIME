@@ -35,12 +35,7 @@ public:
     HRESULT edit(TfEditCookie, ITfContext*, const std::wstring&, bool commit, bool cancel);
 #ifdef LINGUA_TESTING
     // The harness uses a real TSF context without claiming to be the OS-activated keyboard TIP.
-    HRESULT initialize_for_test(ITfThreadMgr* manager, TfClientId id) {
-        thread_manager_=manager;
-        client_id_=id;
-        engine_=lingua_create();
-        return engine_ && lingua_refresh(engine_,&config_)==0 ? initialize_language_bar() : E_FAIL;
-    }
+    HRESULT initialize_for_test(ITfThreadMgr* manager, TfClientId id);
     ITfLangBarItemButton* language_bar_for_test() { return language_bar_button_.Get(); }
 #endif
 private:

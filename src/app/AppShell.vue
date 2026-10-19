@@ -4,10 +4,12 @@ import { computed, onBeforeUnmount, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { UiButton, UiEmptyState, UiIcon } from '@/components/ui'
 import { useAppStore } from '@/stores/app'
+import { useNativeInstallationStore } from '@/stores/native-installation'
 import AppSidebar from './AppSidebar.vue'
 import AppTitlebar from './AppTitlebar.vue'
 import { NAVIGATION } from './navigation'
 const store = useAppStore()
+const native = useNativeInstallationStore()
 const { loading, error, dirty, saving, draft, notices } = storeToRefs(store)
 const route = useRoute()
 const currentPage = computed(() =>
@@ -30,6 +32,7 @@ function beforeUnload(event: BeforeUnloadEvent): void {
 watch(() => draft.value.theme, updateTheme, { immediate: true })
 onMounted(() => {
   void store.initialize()
+  void native.initialize()
   media.addEventListener('change', updateTheme)
   window.addEventListener('beforeunload', beforeUnload)
 })

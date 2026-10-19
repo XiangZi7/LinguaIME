@@ -1,4 +1,5 @@
 #include "text_service.h"
+#include "tsf_test_environment.h"
 #include <iostream>
 #include <stdexcept>
 
@@ -112,6 +113,23 @@ void test_button_contract() {
 }
 }
 
+HRESULT TextService::initialize_for_test(ITfThreadMgr* manager, TfClientId id) {
+    thread_manager_=manager;
+    client_id_=id;
+    engine_=lingua_create();
+    if (!engine_) {
+        std::cerr << "Test Rust engine creation failed.\n";
+        return E_FAIL;
+    }
+    if (lingua_refresh(engine_,&config_)!=0) {
+        std::cerr << "Test engine settings refresh failed.\n";
+        return E_FAIL;
+    }
+    const auto result=initialize_language_bar();
+    require(result,"test language bar initialization");
+    return result;
+}
+
 int main(int argument_count, char** arguments) {
     try {
         require(CoInitializeEx(nullptr,COINIT_APARTMENTTHREADED),"COM");
@@ -128,10 +146,23 @@ int main(int argument_count, char** arguments) {
         ComPtr<ITfThreadMgr> manager;
         require(CoCreateInstance(CLSID_TF_ThreadMgr,nullptr,CLSCTX_INPROC_SERVER,IID_PPV_ARGS(&manager)),"thread manager");
         TfClientId id=TF_CLIENTID_NULL;
-        require(manager->Activate(&id),"manager activation");
+        if (argument_count>1 && strcmp(arguments[1],"--installed-profile")==0) {
+            require(manager->Activate(&id),"precondition manager activation");
+            ComPtr<ITfInputProcessorProfiles> profiles;
+            require(CoCreateInstance(CLSID_TF_InputProcessorProfiles,nullptr,CLSCTX_INPROC_SERVER,
+                                      IID_PPV_ARGS(&profiles)),"installed profile manager");
+            ComPtr<ITfInputProcessorProfileMgr> profile_manager;
+            require(profiles.As(&profile_manager),"installed profile activation manager");
+            require(profiles->ChangeCurrentLanguage(kLanguage),"process language");
+            require(profile_manager->ActivateProfile(TF_PROFILETYPE_INPUTPROCESSOR,kLanguage,
+                kClsid,kProfile,nullptr,TF_IPPMF_FORPROCESS),"process-only installed profile");
+            std::cout << "Installed LinguaIME selected for the test process.\n";
+            require(manager->Deactivate(),"precondition manager deactivation");
+        }
+        require(activate_isolated_tsf(manager.Get(),&id),"isolated manager activation");
         ComPtr<TextService> service;
         service.Attach(new TextService());
-        require(service->initialize_for_test(manager.Get(),id),"test engine initialization");
+        require(service->initialize_for_test(manager.Get(),id),"test service initialization");
         ComPtr<ITfDocumentMgr> document;
         require(manager->CreateDocumentMgr(&document),"document");
         ComPtr<ITfContext> context; TfEditCookie owner_cookie=0;

@@ -29,6 +29,7 @@ export interface Backup {
   learning: LearningItem[]
 }
 export interface AppService {
+  nativeInstallation: () => Promise<NativeInstallationStatus>
   installNative: (uninstall: boolean) => Promise<void>
   snapshot: () => Promise<AppSnapshot>
   query: (request: EngineRequest) => Promise<CandidatePage>
@@ -44,6 +45,10 @@ export interface AppService {
   deleteLearning: (id: string) => Promise<void>
   exportData: () => Promise<Backup>
   clearData: (scope: string) => Promise<void>
+}
+export interface NativeInstallationStatus {
+  phase: 'checking' | 'ready' | 'failed' | 'removed' | 'unsupported'
+  error: { code: string; message: string } | null
 }
 export interface Notice {
   id: number

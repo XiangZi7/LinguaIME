@@ -16,6 +16,10 @@ if ($Unregister) {
   if (!$NativeDirectory) { $NativeDirectory = Join-Path (Split-Path -Parent $PSScriptRoot) 'build\native' }
   $installationInfo = Stage-LinguaRuntime $NativeDirectory $stateDirectory
   $dll = $installationInfo.Dll
+  # A first activation can occur immediately after COM registration; seed a complete runtime first.
+  if (!(Test-Path -LiteralPath (Join-Path $stateDirectory 'active-runtime.txt'))) {
+    Publish-LinguaRuntime $installationInfo
+  }
 }
 if (!(Test-Path -LiteralPath $dll)) { throw 'The registered native DLL is missing. Rebuild and reinstall LinguaIME.' }
 if ($Unregister -or $Repair -or $registeredDll -ne $dll) {

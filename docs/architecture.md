@@ -2,7 +2,9 @@
 
 ## 运行边界
 
-Windows 应用 → C++ TSF/COM 宿主 → Rust C ABI → 拼音核心与 SQLite。候选窗口采用 Win32 非激活分层窗口、Direct2D 圆角/阴影与 DirectWrite 文本，`WS_EX_NOACTIVATE` 防止夺焦。Tauri 管理应用不在按键路径上，关闭它不会卸载输入法。
+Windows 应用 → C++ TSF/COM 加载层 → 可替换原生运行模块 → Rust C ABI → 拼音核心与 SQLite。候选窗口采用 Win32 非激活分层窗口、Direct2D 圆角/阴影与 DirectWrite 文本，`WS_EX_NOACTIVATE` 防止夺焦。Tauri 管理应用不在按键路径上，关闭它不会卸载输入法。
+
+`bootstrap_service.cpp` 负责 TSF 激活、消息线程计时检查、空闲切换与失败回退；`runtime_loader.cpp` 负责严格解析版本指针、ABI 检查和 DLL/COM 生命周期。运行模块持有组合串、编辑会话、语言栏与候选窗口。模块只在无组合串、无待完成编辑、无回调栈时替换；不在调用自己的 DLL 内卸载自己。旧 COM 引用未释放时保留旧模块。运行模块结束后释放 Rust 词典缓存，再解除延迟加载引用，避免每次更新累积完整词典。
 
 `language_bar.cpp` 封装系统任务栏的「中 / 英」按钮、单色图标、点击回调和语言栏通知；`input_mode.cpp` 管理模式与 TSF compartment 同步。按钮停用时先断开回调，再移除语言栏项与监听，避免 Windows 持有的 COM 引用回调已销毁的服务。英文模式在按键路由入口放行，不依赖管理窗口转发按键。
 
@@ -38,7 +40,9 @@ SQLite 重要批量写入使用事务，迁移采用 `user_version`，拒绝打�
 
 每个线程持有独立 opaque context，必须由创建线程调用与销毁。ABI v1 的所有字符串是 NUL 终止 UTF-8；输出采用固定长度、调用方所有的 C 结构体，复制时保持 UTF-8 边界。跨界不传 Rust Vec/String，不转移字符串所有权。返回 0 成功，-1 指针为空，-2 输入无效，-3 panic，-4 学习存储不可用。调用方必须保证非空指针指向有效内存。
 
-Windows 宿主通过延迟加载钩子从自身所在目录加载 `ime_ffi.dll`。安装使用内容摘要独立目录，避免更新正在被其他应用加载的 DLL。管理员授权只用于 TSF 注册；`InstallLayoutOrTip` 只启用本输入法，不替换已有语言列表，不设置默认输入法。
+原生运行模块通过延迟加载钩子从自身版本目录加载 `ime_ffi.dll`。安装使用三个 DLL 的独立内容摘要目录，全部复制校验成功后原子替换 `active-runtime.txt`，保留上一版指针。只有加载层变化或修复注册时才重复 COM 注册。管理员授权只用于 TSF 注册；`InstallLayoutOrTip` 只启用本输入法，不替换已有语言列表，不设置默认输入法。
+
+`src-tauri/src/native_installation.rs` 统一桌面启动与手动更新：每个管理进程在后台同步一次，互斥保护同进程的安装任务，完成后验证真实 TSF 启用与 COM 加载。状态留在 Rust 中供前端读取，不依赖 webview 监听时机；前端只在同步期间轮询，失败持久显示且可重试。同版启动不改写版本指针与上一版记录，也不强行卸载目标应用中的 DLL。
 
 ## 前端与 Rust 规范
 

@@ -1,4 +1,5 @@
 #include "bootstrap_service.h"
+#include "tsf_test_environment.h"
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
@@ -79,7 +80,7 @@ int main() {
         require(CoCreateInstance(CLSID_TF_ThreadMgr, nullptr, CLSCTX_INPROC_SERVER,
                                  IID_PPV_ARGS(&manager)), "thread manager");
         TfClientId client = TF_CLIENTID_NULL;
-        require(manager->Activate(&client), "thread activation");
+        require(activate_isolated_tsf(manager.Get(), &client), "isolated thread activation");
         ComPtr<BootstrapService> service;
         service.Attach(new BootstrapService(root));
         require(service->ActivateEx(manager.Get(), client, 0), "bootstrap activation");
@@ -105,6 +106,8 @@ int main() {
         service->CheckForUpdate();
         expect(GetModuleHandleW(path_a.c_str()) == nullptr, "retired module was not unloaded");
 
+        std::cout << "Testing expected rejections: activation failure, ABI mismatch and missing runtime."
+                  << std::endl;
         const auto module_c = LoadLibraryW(path_c.c_str());
         expect(module_c != nullptr, "failure fixture load");
         setter(module_c, "SetMockActivationFailure")(TRUE);

@@ -32,19 +32,30 @@ HRESULT TextService::initialize_language_bar() {
                 &compartment.cookie);
         }
     }
-    if (FAILED(result)) return result;
+    if (FAILED(result)) {
+        log_error("MODE_COMPARTMENT_INIT_FAILED",result);
+        return result;
+    }
     chinese_mode_ = true;
     result = publish_input_mode(chinese_mode_);
-    if (FAILED(result)) return result;
+    if (FAILED(result)) {
+        log_error("MODE_INITIAL_STATE_FAILED",result);
+        return result;
+    }
     result = thread_manager_.As(&language_bar_manager_);
-    if (FAILED(result)) return result;
+    if (FAILED(result)) {
+        log_error("LANGUAGE_BAR_MANAGER_FAILED",result);
+        return result;
+    }
     language_bar_button_.Attach(new (std::nothrow) LanguageBarButton([this]() {
         // An edit can deactivate the TIP synchronously; retain it only during this callback.
         const ComPtr<TextService> keep_alive(this);
         return set_input_mode(!chinese_mode_);
     }));
     if (!language_bar_button_) return E_OUTOFMEMORY;
-    return language_bar_manager_->AddItem(language_bar_button_.Get());
+    result = language_bar_manager_->AddItem(language_bar_button_.Get());
+    if (FAILED(result)) log_error("LANGUAGE_BAR_ADD_FAILED",result);
+    return result;
 }
 
 void TextService::uninitialize_language_bar() {

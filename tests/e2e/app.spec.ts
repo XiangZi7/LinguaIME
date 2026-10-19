@@ -165,7 +165,6 @@ test('custom titlebar controls use native window commands and installation refre
   await expect(page.getByRole('button', { name: '还原窗口' })).toBeVisible()
   await page.getByRole('button', { name: '还原窗口' }).click()
   await expect(page.getByRole('button', { name: '最大化窗口' })).toBeVisible()
-  await page.getByRole('button', { name: '安装到 Windows 输入法' }).click()
   await expect(
     page.getByText('已加入 Windows 输入法列表。', { exact: false })
   ).toBeVisible()
@@ -197,4 +196,60 @@ test('custom titlebar controls use native window commands and installation refre
   expect(commands).toContain('plugin:window|toggle_maximize')
   expect(commands).toContain('install_native')
   expect(commands).not.toContain('plugin:window|close')
+})
+
+test('desktop startup synchronization is visible and survives route changes', async ({
+  page,
+}) => {
+  await mockDesktop(page, 'checking')
+  await page.goto('/#/languages')
+  await expect(page.getByText('正在同步系统输入法…')).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: '安装到 Windows 输入法' })
+  ).toBeHidden()
+  await expect(
+    page.getByText('已加入 Windows 输入法列表。', { exact: false })
+  ).toBeVisible()
+  await page
+    .getByRole('navigation')
+    .getByRole('link', { name: '概览', exact: true })
+    .click()
+  await expect(
+    page.getByText('已加入 Windows 输入法列表。', { exact: false })
+  ).toBeVisible()
+  const commands = await page.evaluate(
+    () =>
+      JSON.parse(sessionStorage.getItem('window-commands') ?? '[]') as string[]
+  )
+  expect(
+    commands.filter(command => command === 'get_native_installation')
+  ).toHaveLength(2)
+  expect(commands).not.toContain('install_native')
+})
+
+test('failed automatic update keeps the app usable and provides retry', async ({
+  page,
+}) => {
+  await mockDesktop(page, 'failed')
+  await page.goto('/#/languages')
+  await expect(page.getByRole('alert')).toContainText(
+    'Windows 未完成输入法更新'
+  )
+  await page
+    .getByRole('navigation')
+    .getByRole('link', { name: '输入设置' })
+    .click()
+  await expect(
+    page.getByRole('heading', { name: '输入设置', exact: true })
+  ).toBeVisible()
+  await page
+    .getByRole('navigation')
+    .getByRole('link', { name: '语言与引擎' })
+    .click()
+  await expect(page.getByRole('alert')).toContainText('输入法自动更新未完成')
+  await page.getByRole('button', { name: '重试更新', exact: true }).click()
+  await expect(page.getByRole('alert')).toBeHidden()
+  await expect(
+    page.getByText('已加入 Windows 输入法列表。', { exact: false })
+  ).toBeVisible()
 })

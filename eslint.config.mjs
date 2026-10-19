@@ -21,6 +21,8 @@ export default antfu({
   rules: {
     // Prettier is the single formatter; ESLint enforces correctness and maintainability.
     'vue/one-component-per-file': 'error',
+    'vue/singleline-html-element-content-newline': 'off',
+    'vue/html-self-closing': 'off',
     'vue/block-order': ['error', { order: ['script', 'template', 'style'] }],
   },
 })

@@ -1,4 +1,5 @@
 mod commands;
+mod native_installation;
 mod native_status;
 mod state;
 
@@ -12,10 +13,13 @@ pub fn run() {
             use tauri::Manager;
             let state = AppState::new().map_err(Box::<dyn std::error::Error>::from)?;
             app.manage(state);
+            app.manage(native_installation::NativeInstallation::default());
+            native_installation::start(app.handle().clone());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             commands::native::install_native,
+            commands::native::get_native_installation,
             commands::get_snapshot,
             commands::query_candidates,
             commands::save_settings,

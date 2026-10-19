@@ -54,6 +54,9 @@ function mutate(action: (data: PreviewData) => void): void {
   write(data)
 }
 export const browserService: AppService = {
+  async nativeInstallation() {
+    return { phase: 'unsupported', error: null }
+  },
   async installNative() {
     throw new Error('请在 Windows 桌面管理端安装系统输入法')
   },

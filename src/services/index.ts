@@ -4,6 +4,7 @@ import { browserService } from './browser'
 
 export const desktop = isTauri()
 const tauriService: AppService = {
+  nativeInstallation: () => invoke('get_native_installation'),
   installNative: uninstall => invoke('install_native', { uninstall }),
   snapshot: () => invoke('get_snapshot'),
   query: request => invoke('query_candidates', { request }),
