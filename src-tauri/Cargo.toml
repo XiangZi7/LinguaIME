@@ -25,6 +25,7 @@ serde_json = "1"
 ime-types.workspace = true
 ime-core.workspace = true
 ime-storage.workspace = true
+ime-rime.workspace = true
 
 [lints]
 workspace = true

@@ -17,13 +17,17 @@ const app = useAppStore()
           </span>
           <div>
             <p class="text-[13px] font-semibold">中文拼音引擎</p>
-            <p class="mt-1 text-[10px] text-faint">Lingua Core · v0.1.0</p>
+            <p class="mt-1 text-[10px] text-faint">
+              {{ desktop ? 'Rime · v1.17.0' : '浏览器精简预览' }}
+            </p>
           </div>
         </div>
         <dl class="mt-5 space-y-3 text-[11px]">
           <div class="flex justify-between gap-2">
             <dt class="text-muted">默认输入方案</dt>
-            <dd class="text-ink">简体中文 · 全拼</dd>
+            <dd class="text-ink">
+              {{ desktop ? '简体中文 · 全拼 / 首拼' : '简体中文 · 全拼' }}
+            </dd>
           </div>
           <div class="flex items-center justify-between gap-2">
             <dt class="text-muted">原生输入法</dt>
@@ -43,7 +47,7 @@ const app = useAppStore()
             </dd>
           </div>
           <div class="flex justify-between gap-2">
-            <dt class="text-muted">系统词典</dt>
+            <dt class="text-muted">释义词典</dt>
             <dd class="text-ink">CC-CEDICT</dd>
           </div>
           <div class="flex justify-between gap-2">

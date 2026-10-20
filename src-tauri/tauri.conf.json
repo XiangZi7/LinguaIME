@@ -31,6 +31,13 @@
       "../build/native/lingua_tsf.dll": "native/lingua_tsf.dll",
       "../build/native/lingua_runtime.dll": "native/lingua_runtime.dll",
       "../build/native/ime_ffi.dll": "native/ime_ffi.dll",
+      "../build/native/rime/rime.dll": "native/rime/rime.dll",
+      "../build/native/rime/manifest.json": "native/rime/manifest.json",
+      "../build/native/rime/runtime-id.txt": "native/rime/runtime-id.txt",
+      "../build/native/rime/data/build/*": "native/rime/data/build/",
+      "../data/rime/LIBRIME-LICENSE.txt": "native/rime/data/LIBRIME-LICENSE.txt",
+      "../data/rime/LICENSE": "native/rime/data/LICENSE",
+      "../data/rime/AUTHORS": "native/rime/data/AUTHORS",
       "../scripts/register-ime.ps1": "native/register-ime.ps1",
       "../scripts/native-update.ps1": "native/native-update.ps1"
     },

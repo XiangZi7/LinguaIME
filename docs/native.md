@@ -5,6 +5,8 @@
 要求 x64 Windows 10/11、Rust MSVC toolchain、Visual Studio C++ 桌面工具和 Windows SDK。无需 CMake 也可通过项目脚本调用 MSVC；CMakeLists 同时保留供原生 IDE 使用。
 
 ```powershell
+# 首次准备 Rime 官方运行库，需要 7-Zip；后续构建不联网
+powershell -File scripts/prepare-rime.ps1 -Download
 pnpm native:build
 pnpm native:register
 ```
@@ -21,6 +23,7 @@ pnpm native:register
 
 - `host-v1-<摘要>/lingua_tsf.dll`：Windows 注册的薄加载层。
 - `runtime/<运行模块摘要>-<Rust 摘要>/lingua_runtime.dll` 与 `ime_ffi.dll`：同一版输入行为、候选绘制和 Rust 核心。
+- 同一运行目录下的 `rime/`：Rime DLL、预编译简体拼音词典、许可证与摘要清单。资源 ID 编入 Rust 核心，资源更新必须重建核心并整包发布。
 - `active-runtime.txt`：当前版本指针；首行是加载协议版本 `1`，第二行是两个完整 SHA-256。
 - `previous-runtime.txt`：上一版指针，供启动失败回退与手动回滚。
 

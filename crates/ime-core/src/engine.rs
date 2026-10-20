@@ -6,6 +6,7 @@ const DICTIONARY: &str = include_str!("../../../data/dictionaries/cedict.tsv");
 
 pub struct PinyinEngine {
     index: BTreeMap<String, Vec<Candidate>>,
+    by_text: HashMap<String, Vec<(String, usize)>>,
     count: usize,
     log_total_frequency: f64,
 }
@@ -41,8 +42,18 @@ impl PinyinEngine {
             .flatten()
             .map(|entry| entry.frequency.max(1))
             .sum();
+        let mut by_text: HashMap<String, Vec<(String, usize)>> = HashMap::new();
+        for (key, entries) in &index {
+            for (position, entry) in entries.iter().enumerate() {
+                by_text
+                    .entry(entry.text.clone())
+                    .or_default()
+                    .push((key.clone(), position));
+            }
+        }
         Self {
             index,
+            by_text,
             count,
             log_total_frequency: (total.max(1) as f64).ln(),
         }
@@ -50,6 +61,16 @@ impl PinyinEngine {
 
     pub fn count(&self) -> usize {
         self.count
+    }
+
+    /// Metadata enrichment only; candidate generation and ordering belong to Rime.
+    pub fn lookup_text(&self, text: &str, reading_key: &str) -> Option<&Candidate> {
+        let locations = self.by_text.get(text)?;
+        let (key, position) = locations
+            .iter()
+            .find(|(key, _)| key == reading_key)
+            .or_else(|| locations.first())?;
+        self.index.get(key)?.get(*position)
     }
 
     pub fn query(

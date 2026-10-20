@@ -11,6 +11,7 @@ crate-type = ["cdylib", "rlib"]
 ime-core.workspace = true
 ime-types.workspace = true
 ime-storage.workspace = true
+ime-rime.workspace = true
 
 [lints]
 workspace = true

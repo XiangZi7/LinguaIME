@@ -184,8 +184,8 @@ async function favorite(candidate: Candidate): Promise<void> {
     </footer>
   </UiPanel>
   <p class="mt-4 text-[11px] leading-6 text-muted">
-    系统词库来自 CC-CEDICT，遵循 CC BY-SA
-    4.0。释义保留原始含义；词性缺失时不作推测。个人词条与系统词库独立保存。
+    桌面输入词库来自 Rime pinyin-simp（Apache-2.0），英文释义来自 CC-CEDICT（CC
+    BY-SA 4.0）。未收录的释义与词性不作推测，个人词条独立保存。
   </p>
   <UiDialog
     v-model="editorOpen"

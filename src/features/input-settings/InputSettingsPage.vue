@@ -10,6 +10,7 @@ import {
   UiSwitch,
 } from '@/components/ui'
 import { DISPLAY_OPTIONS } from '@/constants/settings'
+import { desktop } from '@/services'
 import { useAppStore } from '@/stores/app'
 const { draft } = storeToRefs(useAppStore())
 </script>
@@ -26,9 +27,15 @@ const { draft } = storeToRefs(useAppStore())
     >
       <UiSettingRow
         title="输入方案"
-        description="当前支持简体中文全拼。双拼、模糊音与繁体转换将在后续提供。"
+        :description="
+          desktop
+            ? 'Rime 简体拼音支持首拼、全拼与混输，例如 nh、nihao、ni h。双拼、模糊音与繁体转换将在后续提供。'
+            : '浏览器使用精简全拼词典；首拼与连续组句请在 Windows 桌面端体验。'
+        "
       >
-        <UiBadge tone="green">简体中文 · 全拼</UiBadge>
+        <UiBadge tone="green">
+          {{ desktop ? 'Rime · 全拼 / 首拼' : '简体中文 · 全拼' }}
+        </UiBadge>
       </UiSettingRow>
       <UiSettingRow
         title="候选显示模式"
@@ -57,9 +64,15 @@ const { draft } = storeToRefs(useAppStore())
       </UiSettingRow>
       <UiSettingRow
         title="候选排序"
-        description="先匹配完整拼音，再结合本地选择次数和个人词条排序。不使用在线上下文。"
+        :description="
+          desktop
+            ? '保留 Rime 候选顺序，结合本地选择次数和个人词条排序。输入无需联网。'
+            : '结合完整拼音、本地选择次数和个人词条排序。'
+        "
       >
-        <UiBadge>精确匹配 + 本地词频</UiBadge>
+        <UiBadge>
+          {{ desktop ? 'Rime + 本地词频' : '精确匹配 + 本地词频' }}
+        </UiBadge>
       </UiSettingRow>
     </UiPanel>
     <UiPanel title="按键行为">

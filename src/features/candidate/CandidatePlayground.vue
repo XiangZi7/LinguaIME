@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { UiBadge, UiButton, UiIcon } from '@/components/ui'
-import { errorMessage, service } from '@/services'
+import { desktop, errorMessage, service } from '@/services'
 import { useAppStore } from '@/stores/app'
 import CandidateWindow from './CandidateWindow.vue'
 import { useCandidatePreview } from './useCandidatePreview'
@@ -59,7 +59,7 @@ async function favorite(): Promise<void> {
           class="mb-4 flex items-center justify-between text-[10px] text-muted"
         >
           <span class="tracking-wide">在这里，试着输入拼音</span>
-          <span>中文 · 全拼</span>
+          <span>{{ desktop ? '中文 · 全拼 / 首拼' : '中文 · 全拼' }}</span>
         </div>
         <label
           class="sr-only"

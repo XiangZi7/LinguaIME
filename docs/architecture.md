@@ -2,7 +2,7 @@
 
 ## 运行边界
 
-Windows 应用 → C++ TSF/COM 加载层 → 可替换原生运行模块 → Rust C ABI → 拼音核心与 SQLite。候选窗口采用 Win32 非激活分层窗口、Direct2D 圆角/阴影与 DirectWrite 文本，`WS_EX_NOACTIVATE` 防止夺焦。Tauri 管理应用不在按键路径上，关闭它不会卸载输入法。
+Windows 应用 → C++ TSF/COM 加载层 → 可替换原生运行模块 → Rust C ABI → Rime 拼音核心、CC-CEDICT 释义与 SQLite。候选窗口采用 Win32 非激活分层窗口、Direct2D 圆角/阴影与 DirectWrite 文本，`WS_EX_NOACTIVATE` 防止夺焦。Tauri 管理应用不在按键路径上，关闭它不会卸载输入法。
 
 `bootstrap_service.cpp` 负责 TSF 激活、消息线程计时检查、空闲切换与失败回退；`runtime_loader.cpp` 负责严格解析版本指针、ABI 检查和 DLL/COM 生命周期。运行模块持有组合串、编辑会话、语言栏与候选窗口。模块只在无组合串、无待完成编辑、无回调栈时替换；不在调用自己的 DLL 内卸载自己。旧 COM 引用未释放时保留旧模块。运行模块结束后释放 Rust 词典缓存，再解除延迟加载引用，避免每次更新累积完整词典。
 
@@ -10,27 +10,30 @@ Windows 应用 → C++ TSF/COM 加载层 → 可替换原生运行模块 → Rus
 
 保留现有仓库的 `src` / `src-tauri` 根目录，新增 Rust workspace 与 `native/tsf-host`，避免为了目录形式迁移现有工具链。`Cargo.lock`（根目录）和 `pnpm-lock.yaml` 是版本基准。
 
-| 目录                     | 职责                                                   |
-| ------------------------ | ------------------------------------------------------ |
-| `crates/ime-types`       | 候选、设置、个人数据、错误与 schema 契约               |
-| `crates/ime-core`        | CC-CEDICT 索引、拼音边界、词频排序、动态规划组合与分页 |
-| `crates/ime-storage`     | SQLite WAL、版本化迁移、设置、个人词条、词频与生词本   |
-| `crates/ime-ffi`         | ABI v1，UTF-8、调用方输出缓冲区、panic 隔离            |
-| `native/tsf-host`        | COM 生命周期、键盘策略、编辑会话、焦点与 Win32 候选窗  |
-| `src-tauri/src/commands` | 参数与错误边界、核心调用、系统安装命令                 |
-| `src/app`                | 应用壳、自定义 Windows 标题栏、导航与窗口控制          |
-| `src/components/ui`      | 无业务基础 UI 组件库                                   |
-| `src/features`           | 按功能划分的页面、组件与 composable                    |
-| `src/services`           | 桌面 invoke 与浏览器预览 adapter、校验与导出           |
-| `src/stores`             | 设置草稿、保存状态和管理数据快照                       |
-| `data/dictionaries`      | 可追溯词典、摘要和数据许可证                           |
-| `tests`                  | 引擎/导入契约与 Playwright 端到端测试                  |
+| 目录                     | 职责                                                     |
+| ------------------------ | -------------------------------------------------------- |
+| `crates/ime-types`       | 候选、设置、个人数据、错误与 schema 契约                 |
+| `crates/ime-core`        | CC-CEDICT 元数据索引与旧检索器；为 Rime 候选补充英文释义 |
+| `crates/ime-rime`        | Rime C API 生命周期、简体拼音查询、个人短语与选词排序    |
+| `crates/ime-storage`     | SQLite WAL、版本化迁移、设置、个人词条、词频与生词本     |
+| `crates/ime-ffi`         | ABI v1，UTF-8、调用方输出缓冲区、panic 隔离              |
+| `native/tsf-host`        | COM 生命周期、键盘策略、编辑会话、焦点与 Win32 候选窗    |
+| `src-tauri/src/commands` | 参数与错误边界、核心调用、系统安装命令                   |
+| `src/app`                | 应用壳、自定义 Windows 标题栏、导航与窗口控制            |
+| `src/components/ui`      | 无业务基础 UI 组件库                                     |
+| `src/features`           | 按功能划分的页面、组件与 composable                      |
+| `src/services`           | 桌面 invoke 与浏览器预览 adapter、校验与导出             |
+| `src/stores`             | 设置草稿、保存状态和管理数据快照                         |
+| `data/dictionaries`      | 可追溯词典、摘要和数据许可证                             |
+| `tests`                  | 引擎/导入契约与 Playwright 端到端测试                    |
 
 ## 输入与数据
 
-词典初始化在宿主激活阶段完成；按键查询使用内存中的 BTree 前缀索引，不访问网络或逐键扫描整个词典。查询结果有界（最多约 512 个前缀候选），这是交互延迟与完整检索之间的 MVP 取舍；词库管理当前也复用该有界查询。
+词典初始化在宿主激活阶段完成；按键查询使用离线 librime 1.17.0 与官方 pinyin-simp 词典，不访问网络或逐键扫描 CC-CEDICT。每次最多检查 512 个 Rime 候选，返回最多 128 个完整覆盖本次输入的结果，按现有契约去重分页。候选 highlight 和 commit preview 用于排除只消费输入前缀的候选，防止上屏时丢掉剩余按键；逐段锁词尚未实现。
 
-用户词频、精确匹配、个人词条与静态 jieba 权重用于可解释排序。无完整词条的连续拼音使用 unigram 动态规划分词，不为组合句子拼接英文释义。单引号/空格保留显式音节边界。未实现神经语言模型、完整上下文预测或双拼。
+Rime 负责全拼、首拼、简拼/全拼混输、拼写纠错与连续组句；未学习候选保留 Rime 原有顺序。个人短语与 SQLite 选词频率在适配层合并；明确分隔音节的个人短语也支持首拼和混输。CC-CEDICT 只按候选文本/读音补充真实英文释义，不为未收录词或组合句子拼接释义。单引号/空格保留显式音节边界。未加载大型语法模型、完整上下文预测或双拼。
+
+Rime 关闭 LevelDB 用户词库，避免多个宿主进程争用独占写锁；选词学习继续写入共享 SQLite 并遵守原有隐私开关。Rime API 在模块内串行调用，引用计数归零后 finalize 并卸载动态库。资源由构建阶段预编译，随运行模块按清单逐文件摘要校验，资源 ID 嵌入 Rust 核心；运行时不部署词库。详见 `data/rime/README.md`。
 
 设置在新组合开始前读取，词条与词频同步到宿主缓存；核心查询不等待 SQLite。数据库忙等待上限 5 ms，学习失败不能阻止文字提交。跨进程通过同一 `%LOCALAPPDATA%/LinguaIME/lingua.db` 交换持久化数据。
 

@@ -11,7 +11,13 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             use tauri::Manager;
-            let state = AppState::new().map_err(Box::<dyn std::error::Error>::from)?;
+            let runtime_directory = if cfg!(debug_assertions) {
+                None
+            } else {
+                Some(app.path().resource_dir()?.join("native/rime"))
+            };
+            let state = AppState::new(runtime_directory.as_deref())
+                .map_err(Box::<dyn std::error::Error>::from)?;
             app.manage(state);
             app.manage(native_installation::NativeInstallation::default());
             native_installation::start(app.handle().clone());

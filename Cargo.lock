@@ -1723,7 +1723,17 @@ name = "ime-ffi"
 version = "0.1.0"
 dependencies = [
  "ime-core",
+ "ime-rime",
  "ime-storage",
+ "ime-types",
+]
+
+[[package]]
+name = "ime-rime"
+version = "0.1.0"
+dependencies = [
+ "cc",
+ "ime-core",
  "ime-types",
 ]
 
@@ -2045,6 +2055,7 @@ name = "lingua-desktop"
 version = "0.1.0"
 dependencies = [
  "ime-core",
+ "ime-rime",
  "ime-storage",
  "ime-types",
  "serde",

@@ -3,6 +3,7 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Push-Location $projectRoot
 try {
+  & (Join-Path $PSScriptRoot 'prepare-rime.ps1')
   if (!$SkipRust) {
     cargo build -p ime-ffi --release --locked --offline
     if ($LASTEXITCODE -ne 0) { throw 'Rust bridge build failed' }

@@ -4,6 +4,7 @@ mod types;
 pub use types::{FfiCandidate, FfiConfig, FfiPage};
 
 use ime_core::PinyinEngine;
+use ime_rime::{InputEngine, default_runtime_directory};
 use ime_storage::{Storage, default_data_path};
 use ime_types::{EngineRequest, Settings, UserPhrase};
 use std::{
@@ -27,7 +28,7 @@ fn shared_engine() -> Arc<PinyinEngine> {
 }
 
 pub struct EngineContext {
-    engine: Arc<PinyinEngine>,
+    engine: InputEngine,
     storage: Option<Storage>,
     settings: Settings,
     phrases: Vec<UserPhrase>,
@@ -60,17 +61,26 @@ pub extern "C" fn lingua_release_cache() {
 #[unsafe(no_mangle)]
 pub extern "C" fn lingua_create() -> *mut EngineContext {
     catch_unwind(|| {
-        let storage = Storage::open(&default_data_path()).ok();
+        let data_path = default_data_path();
+        let storage = Storage::open(&data_path).ok();
+        let engine = InputEngine::new(
+            shared_engine(),
+            &default_runtime_directory(),
+            data_path.parent()?,
+        )
+        .ok()?;
         let mut context = Box::new(EngineContext {
-            engine: shared_engine(),
+            engine,
             storage,
             settings: Settings::default(),
             phrases: Vec::new(),
             frequencies: HashMap::new(),
         });
         context.refresh();
-        Box::into_raw(context)
+        Some(Box::into_raw(context))
     })
+    .ok()
+    .flatten()
     .unwrap_or(std::ptr::null_mut())
 }
 
@@ -224,7 +234,15 @@ pub unsafe extern "C" fn lingua_record(context: *mut EngineContext, id: *const c
             return -2;
         };
         match &mut context.storage {
-            Some(storage) => storage.record_selection(id).map(|()| 0).unwrap_or(-4),
+            Some(storage) => match storage.record_selection(id) {
+                Ok(()) => {
+                    if context.settings.auto_learn {
+                        *context.frequencies.entry(id.to_owned()).or_default() += 1;
+                    }
+                    0
+                }
+                Err(_) => -4,
+            },
             None => -4,
         }
     })

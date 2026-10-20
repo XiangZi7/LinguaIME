@@ -3,9 +3,9 @@ $ErrorActionPreference = 'Stop'
 # A native build launched through PowerShell 7 must also work without this optional command.
 function Get-FileHash { throw 'Installer must not depend on the Get-FileHash module.' }
 $testOutput = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..\build\native'))
-$fixture = Join-Path $testOutput ('installer-fixture-' + [Guid]::NewGuid().ToString('N'))
+$fixture = Join-Path $testOutput ('i-' + [Guid]::NewGuid().ToString('N').Substring(0,8))
 $source = Join-Path $fixture 'source'
-$state = Join-Path $fixture 'installed'
+$state = Join-Path $fixture 's'
 New-Item -ItemType Directory -Path $source -Force | Out-Null
 $hashSample = Join-Path $fixture 'hash-sample.txt'
 [IO.File]::WriteAllText($hashSample, 'abc', [Text.Encoding]::ASCII)
@@ -15,6 +15,16 @@ if ((Get-LinguaFileHash $hashSample) -ne 'BA7816BF8F01CFEA414140DE5DAE2223B00361
 foreach ($name in @('lingua_tsf.dll', 'lingua_runtime.dll', 'ime_ffi.dll')) {
   [IO.File]::WriteAllText((Join-Path $source $name), $name)
 }
+$rime = Join-Path $source 'rime'
+New-Item -ItemType Directory -Path (Join-Path $rime 'data\build') -Force | Out-Null
+$rimeFiles = [ordered]@{}
+foreach ($name in @('rime.dll','data/build/default.yaml','data/build/lingua_pinyin.schema.yaml',
+                     'data/build/pinyin_simp.prism.bin','data/build/pinyin_simp.table.bin')) {
+  [IO.File]::WriteAllText((Join-Path $rime $name), $name)
+  $rimeFiles[$name] = Get-LinguaFileHash (Join-Path $rime $name)
+}
+[IO.File]::WriteAllText((Join-Path $rime 'manifest.json'), (@{files=$rimeFiles} | ConvertTo-Json -Depth 4))
+[IO.File]::WriteAllText((Join-Path $rime 'runtime-id.txt'), (Get-LinguaFileHash (Join-Path $rime 'manifest.json')))
 $first = Stage-LinguaRuntime $source $state
 Publish-LinguaRuntime $first
 $active = Join-Path $state 'active-runtime.txt'
@@ -58,4 +68,10 @@ try { Undo-LinguaRuntimeUpdate $state | Out-Null }
 catch { $rejected = $true }
 if (!$rejected) { throw 'Corrupt rollback runtime was accepted' }
 if ((Read-LinguaRuntimeRecord $active) -ne $first.Record) { throw 'Failed stage changed active runtime' }
+$installedRime = Join-Path $state ("runtime\" + (($first.Record -split '\n')[1]) + '\rime\rime.dll')
+[IO.File]::WriteAllText($installedRime, 'corrupt-rime')
+$rejected = $false
+try { Test-LinguaRimeBundle (Split-Path -Parent $installedRime) | Out-Null }
+catch { $rejected = $true }
+if (!$rejected) { throw 'Corrupt Rime bundle was accepted' }
 Write-Output 'Native installer: immutable staging, atomic readers, repeated startup, previous version and rollback passed.'

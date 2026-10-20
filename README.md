@@ -4,10 +4,12 @@
 
 ## 运行
 
-需要 Node.js 22.18+、pnpm 10、Rust MSVC、Visual Studio C++ 桌面构建工具与 Windows SDK。
+需要 Node.js 22.18+、pnpm 10、Rust MSVC、Visual Studio C++ 桌面构建工具、Windows SDK 与 7-Zip。
 
 ```powershell
 pnpm install --frozen-lockfile
+# 首次下载固定版本的 Rime 官方运行库，此后构建与打字均可离线
+powershell -File scripts/prepare-rime.ps1 -Download
 pnpm dev
 # 浏览器交互预览：http://127.0.0.1:1430
 pnpm tauri dev
@@ -30,8 +32,8 @@ pnpm native:unregister
 - 独立原生 TSF 宿主和 Win32 候选窗，不依赖管理窗口进行输入。
 - 系统任务栏「中 / 英」模式按钮，单击切换拼音输入与英文直通；关闭管理窗口后仍可使用。
 - 输入模块在拼音提交或取消后自动切换新版，保留中英模式与上一版回退；首次迁移或加载层升级仍需重开应用。
-- 全拼检索、显式音节边界、连续拼音组合、词频排序、去重与分页。
-- CC-CEDICT 121,202 条离线词条，jieba 静态词频；来源、许可与摘要随数据保存。
+- Rime 1.17.0 简体拼音核心：全拼、首拼、简拼/全拼混输、显式音节边界与连续组句；保留现有候选窗、个人短语、选词学习和分页。
+- Rime 官方 pinyin-simp 字词库用于输入，CC-CEDICT 121,202 条离线词条用于英文释义；来源、许可与摘要随数据保存。
 - 十个管理页面、Tailwind v4 语义令牌和可复用 UI 组件库；深浅色、实时候选预览、设置保存与取消。
 - SQLite 设置、个人词条、词频、收藏与复习，导入校验/事务、导出与确认清除。
 - 系统注册、当前用户启用、COM 与进程内真实 TSF 激活已验证。
@@ -62,4 +64,5 @@ pnpm native:build
 - [原生安装与故障处理](docs/native.md)
 - [验证记录与未验收项目](docs/verification.md)
 - [词典来源与许可证](data/dictionaries/README.md)
+- [Rime 资源与接入边界](data/rime/README.md)
 - [原始需求](prompt/LinguaIME.md)

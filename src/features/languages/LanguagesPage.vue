@@ -33,7 +33,11 @@ const app = useAppStore()
             </div>
             <p class="mt-1 text-xs text-muted">简体中文 · zh-CN</p>
             <p class="mt-3 text-xs text-muted">
-              全拼输入 / 中英双语候选 / 本地词频学习
+              {{
+                desktop
+                  ? '全拼与首拼混输 / 连续组句 / 中英双语候选'
+                  : '全拼交互预览 / 中英双语候选'
+              }}
             </p>
           </div>
         </div>
@@ -53,10 +57,12 @@ const app = useAppStore()
       >
         <div>
           <dt class="text-faint">输入引擎</dt>
-          <dd class="mt-2 text-ink">Lingua Core 0.1.0</dd>
+          <dd class="mt-2 text-ink">
+            {{ desktop ? 'Rime 1.17.0' : '浏览器精简预览' }}
+          </dd>
         </div>
         <div>
-          <dt class="text-faint">离线词典</dt>
+          <dt class="text-faint">离线释义词典</dt>
           <dd class="mt-2 text-ink">
             CC-CEDICT · {{ app.snapshot?.dictionaryCount.toLocaleString() }} 条
           </dd>

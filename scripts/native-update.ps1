@@ -80,6 +80,31 @@ function Copy-LinguaImmutableFile([string]$Source, [string]$Target, [string]$Exp
   }
 }
 
+function Test-LinguaRimeBundle([string]$Directory) {
+  $manifestPath = Join-Path $Directory 'manifest.json'
+  $idPath = Join-Path $Directory 'runtime-id.txt'
+  if (!(Test-Path -LiteralPath $manifestPath) -or !(Test-Path -LiteralPath $idPath)) {
+    throw 'Rime bundle is missing. Run pnpm native:build first.'
+  }
+  if ([IO.File]::ReadAllText($idPath).Trim() -ne (Get-LinguaFileHash $manifestPath)) {
+    throw 'Rime manifest failed verification.'
+  }
+  $manifest = [IO.File]::ReadAllText($manifestPath) | ConvertFrom-Json
+  foreach ($required in @('rime.dll', 'data/build/default.yaml', 'data/build/lingua_pinyin.schema.yaml',
+                          'data/build/pinyin_simp.prism.bin', 'data/build/pinyin_simp.table.bin')) {
+    if (!$manifest.files.PSObject.Properties[$required]) { throw "Rime manifest is missing $required" }
+  }
+  foreach ($file in $manifest.files.PSObject.Properties) {
+    if ($file.Name -notmatch '\A(?:rime\.dll|data/(?:build/)?[a-zA-Z0-9_.-]+)\z' -or
+        $file.Value -notmatch '\A[0-9A-F]{64}\z') { throw 'Invalid Rime manifest entry.' }
+    $path = Join-Path $Directory $file.Name
+    if (!(Test-Path -LiteralPath $path) -or (Get-LinguaFileHash $path) -ne $file.Value) {
+      throw "Rime file failed verification: $($file.Name)"
+    }
+  }
+  return $manifest
+}
+
 function Stage-LinguaRuntime([string]$SourceDirectory, [string]$StateDirectory) {
   Use-LinguaUpdateLock {
     $sourceHost = Join-Path $SourceDirectory 'lingua_tsf.dll'
@@ -88,6 +113,8 @@ function Stage-LinguaRuntime([string]$SourceDirectory, [string]$StateDirectory) 
     foreach ($source in @($sourceHost, $sourceRuntime, $sourceCore)) {
       if (!(Test-Path -LiteralPath $source)) { throw 'Native binaries are missing. Run pnpm native:build first.' }
     }
+    $rimeSource = Join-Path $SourceDirectory 'rime'
+    $rimeManifest = Test-LinguaRimeBundle $rimeSource
     $hostHash = Get-LinguaFileHash $sourceHost
     $runtimeHash = Get-LinguaFileHash $sourceRuntime
     $coreHash = Get-LinguaFileHash $sourceCore
@@ -99,6 +126,18 @@ function Stage-LinguaRuntime([string]$SourceDirectory, [string]$StateDirectory) 
     Copy-LinguaImmutableFile $sourceHost $hostDll $hostHash
     Copy-LinguaImmutableFile $sourceRuntime (Join-Path $runtimeDirectory 'lingua_runtime.dll') $runtimeHash
     Copy-LinguaImmutableFile $sourceCore (Join-Path $runtimeDirectory 'ime_ffi.dll') $coreHash
+    $rimeTarget = Join-Path $runtimeDirectory 'rime'
+    New-Item -ItemType Directory -Path $rimeTarget -Force | Out-Null
+    foreach ($file in $rimeManifest.files.PSObject.Properties) {
+      $target = Join-Path $rimeTarget $file.Name
+      New-Item -ItemType Directory -Path (Split-Path -Parent $target) -Force | Out-Null
+      Copy-LinguaImmutableFile (Join-Path $rimeSource $file.Name) $target $file.Value
+    }
+    foreach ($name in @('manifest.json','runtime-id.txt')) {
+      $source = Join-Path $rimeSource $name
+      Copy-LinguaImmutableFile $source (Join-Path $rimeTarget $name) (Get-LinguaFileHash $source)
+    }
+    Test-LinguaRimeBundle $rimeTarget | Out-Null
     [pscustomobject]@{ Dll = $hostDll; Root = $StateDirectory; Record = "1`n$version`n" }
   }
 }
@@ -131,6 +170,9 @@ function Undo-LinguaRuntimeUpdate([string]$StateDirectory) {
     if ((Get-LinguaFileHash (Join-Path $directory 'lingua_runtime.dll')) -ne $hashes[0] -or
         (Get-LinguaFileHash (Join-Path $directory 'ime_ffi.dll')) -ne $hashes[1]) {
       throw 'The previous runtime failed verification. Reinstall a known good version.'
+    }
+    if (Test-Path -LiteralPath (Join-Path $directory 'rime')) {
+      Test-LinguaRimeBundle (Join-Path $directory 'rime') | Out-Null
     }
     Write-LinguaRuntimeRecord $previousPath $current
     Write-LinguaRuntimeRecord $activePath $previous

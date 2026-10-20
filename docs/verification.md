@@ -2,6 +2,17 @@
 
 2026-10-19，Windows x64 本机开发环境。
 
+## 2026-10-20：Rime 接入
+
+- 系统输入与桌面预览改用 librime 1.17.0 + 官方 pinyin-simp 词典，保留 Win32 候选窗、CC-CEDICT 英文释义、SQLite 个人词条与选词学习。浏览器预览仍为精简全拼词典。
+- 14 个 Rust 测试通过，包含真实 Rime 首拼、混输、组句、显式音节边界、释义、学习排序、分页与非法输入。桌面程序构建、rustfmt 与 Clippy 通过。
+- 原生 ABI 测试通过 `nh → 你好`、`srf → 输入法` 与两个同时存活的引擎上下文。真实 TSF context 通过 `NH` + 空格提交“你好”；两个独立进程同时查询同一资源和数据目录通过。
+- 原生运行模块更新、回滚与安装清单校验通过；资源 ID 在 Windows PowerShell 5.1 和 PowerShell 7 间保持一致。Tauri 资源映射已实际复制 DLL 与预编译词典。
+- 已发布本机新版，从安装目录直接加载 `ime_ffi.dll` 和相邻 Rime 资源验证 `nh`、`xx`、`xuex`、`srf` 与 `woaizhongguo`。系统 profile enabled=true、COM 激活、仅限测试进程的 TSF 激活和中英切换均 HRESULT=0。
+- Release 性能样本：冷初始化约 247 ms，150 次热查询 P95 约 7 ms。命令：`cargo run -p ime-rime --example rime_benchmark --release --locked --offline`。该结果不含目标应用编辑锁和候选窗绘制。
+
+当前按整个组合串提交，只显示能完整覆盖输入的候选，避免选中前缀词后丢失剩余按键。逐段锁词、大型语法模型与完整物理键盘应用兼容性验收仍未完成。
+
 ## 自动化
 
 启动回归已通过完整 `pnpm tauri dev`：原生检查、更新器检查、Vite 与 Rust 桌面程序正常启动，Windows 窗口已创建并响应。验证结束后主动关闭测试进程。桌面库改名为 `lingua_desktop_lib`，消除与程序同名导致的 Windows PDB 冲突。

@@ -232,6 +232,10 @@ int main(int argument_count, char** arguments) {
             require(mode_button->OnClick(TF_LBI_CLK_LEFT,POINT{},nullptr),"restore Chinese mode");
             expect_mode(mode_button.Get(),L"中");
         }
+        for (const char key : std::string("NH"))
+            require(keys->OnKeyDown(context.Get(),static_cast<WPARAM>(key),0,&eaten),"Rime initials composition");
+        require(keys->OnKeyDown(context.Get(),VK_SPACE,0,&eaten),"Rime initials commit");
+        if (read(context.Get(),id)!=L"学习学习你好") throw std::runtime_error("Rime initials committed text mismatch");
         require(service->Deactivate(),"service deactivation");
         require(mode_button->OnClick(TF_LBI_CLK_LEFT,POINT{},nullptr),"button after deactivation");
         document->Pop(TF_POPF_ALL);

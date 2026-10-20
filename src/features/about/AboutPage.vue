@@ -45,7 +45,7 @@ import { desktop } from '@/services'
     <UiPanel title="当前版本">
       <UiSettingRow
         title="已提供"
-        description="本地全拼检索、三种候选模式、个人词条、词频学习、收藏复习、SQLite 设置与数据管理。"
+        description="桌面 Rime 全拼与首拼混输、连续组句、三种候选模式、个人词条、词频学习、收藏复习与 SQLite 数据管理。浏览器提供精简全拼预览。"
       />
       <UiSettingRow
         title="Windows 原生接入"
@@ -98,6 +98,26 @@ import { desktop } from '@/services'
       <div class="space-y-3 px-5 py-5 text-xs leading-6 text-muted">
         <p>
           <a
+            href="https://github.com/rime/librime"
+            target="_blank"
+            rel="noreferrer"
+            class="text-link"
+          >
+            Rime 1.17.0
+          </a>
+          · BSD-3-Clause。桌面输入字词库来自
+          <a
+            href="https://github.com/rime/rime-pinyin-simp"
+            target="_blank"
+            rel="noreferrer"
+            class="text-link"
+          >
+            Rime pinyin-simp
+          </a>
+          · Apache-2.0；选词频率和个人词条保存在本地。
+        </p>
+        <p>
+          <a
             href="https://www.mdbg.net/chinese/dictionary?page=cedict"
             target="_blank"
             rel="noreferrer"
@@ -125,8 +145,8 @@ import { desktop } from '@/services'
           Vue · TypeScript · Tailwind CSS v4 · Pinia · Tauri 2 · Rust · SQLite
         </p>
         <p>
-          静态词频来自
-          jieba（MIT），用于本地候选排序；不包含在线上下文模型。未提供释义、词性或例句时，不显示推测结果。
+          CC-CEDICT 元数据中的静态词频来自 jieba（MIT）。桌面候选由 Rime
+          排序，并结合本地选词记录；未收录的释义、词性或例句不作推测。
         </p>
       </div>
     </UiPanel>

@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/ime-types", "crates/ime-core", "crates/ime-storage", "crates/ime-ffi", "src-tauri"]
+members = ["crates/ime-types", "crates/ime-core", "crates/ime-rime", "crates/ime-storage", "crates/ime-ffi", "src-tauri"]
 resolver = "3"
 
 [workspace.package]
@@ -14,6 +14,7 @@ rusqlite = { version = "0.40.2", features = ["bundled"] }
 ime-types = { path = "crates/ime-types" }
 ime-core = { path = "crates/ime-core" }
 ime-storage = { path = "crates/ime-storage" }
+ime-rime = { path = "crates/ime-rime" }
 
 [workspace.lints.clippy]
 unwrap_used = "warn"

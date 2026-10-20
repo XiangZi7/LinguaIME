@@ -13,6 +13,15 @@ int main() {
     LinguaConfig config{}; assert(lingua_refresh(context,&config)==0);
     LinguaPage page{}; assert(lingua_query(context,"xuexi",0,&page)==0);
     assert(page.schema_version==1 && page.item_count>0);
+    assert(lingua_query(context,"nh",0,&page)==0);
+    assert(page.item_count>0 && strcmp(page.items[0].text,"你好")==0);
+    assert(page.items[0].translation[0]);
+    assert(lingua_query(context,"srf",0,&page)==0);
+    assert(page.item_count>0 && strcmp(page.items[0].text,"输入法")==0);
+    auto* second=lingua_create(); assert(second);
+    assert(lingua_query(second,"nh",0,&page)==0 && page.item_count>0);
+    lingua_destroy(second);
+    assert(lingua_query(context,"nh",0,&page)==0 && page.item_count>0);
     assert(lingua_query(context,"=",0,&page)==-2);
     lingua_destroy(context);
     std::cout << "Native key policy, ABI layout and Rust dictionary bridge passed.\n";

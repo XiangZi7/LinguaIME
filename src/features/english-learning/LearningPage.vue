@@ -36,6 +36,14 @@ const items = computed(() =>
         .includes(state.search.toLowerCase())
   )
 )
+const dataLicense = computed(() => {
+  const source = state.detail?.candidate.source ?? ''
+  if (source.includes('CC-CEDICT'))
+    return 'CC BY-SA 4.0 · CC-CEDICT contributors'
+  if (source === 'Rime')
+    return 'Rime pinyin-simp · Apache-2.0；组合句不含推测释义'
+  return '个人提供的词条与释义'
+})
 const options = computed(() => [
   { value: 'all', label: `全部 · ${app.snapshot?.learning.length ?? 0}` },
   { value: 'review', label: '待复习' },
@@ -175,11 +183,7 @@ const { search, filter, detail, removing, busy } = toRefs(state)
         <div class="flex gap-5">
           <dt class="w-14 text-faint">数据许可</dt>
           <dd>
-            {{
-              detail.candidate.source === 'CC-CEDICT'
-                ? 'CC BY-SA 4.0 · CC-CEDICT contributors'
-                : '个人提供的词条与释义'
-            }}
+            {{ dataLicense }}
           </dd>
         </div>
       </dl>
