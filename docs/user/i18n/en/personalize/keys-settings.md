@@ -8,7 +8,7 @@ All changeable keys are in 设置 → 快捷键 (Settings → Shortcuts), and ch
 
 ## Paging keys
 
-翻页键 (Paging keys) can be `[` `]` (default), `,` `.` or `-` `=`: the first goes to the previous page, the second to the next. `PageUp` / `PageDown` always work.
+翻页键 (Paging keys) can be `-` `=` (default), `[` `]` or `,` `.`: the first goes to the previous page, the second to the next. `PageUp` / `PageDown` always work.
 
 - With `,` `.`, comma and full stop page while you're typing pinyin, instead of committing the candidate and adding punctuation.
 - With `-` `=`, **the two keys type normally when there's nowhere to page to**: with no previous page while typing pinyin, `-` is just `-` (entering direct English input); with no next page, `=` is just `=`. The same goes for `-` among English candidates: on the first page, `-` is the hyphen in a word (`well-known`).

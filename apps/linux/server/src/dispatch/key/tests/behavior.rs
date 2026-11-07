@@ -35,7 +35,7 @@ fn english_candidates_select_current_page_and_preserve_trailing_space() {
         ..Default::default()
     };
     compose(&mut router, "hel", english);
-    let second = key(&mut router, b']' as u32, Some(']'), english).2;
+    let second = key(&mut router, b'=' as u32, Some('='), english).2;
     assert_eq!(second.page, 1);
     assert_eq!(
         key(&mut router, 0x31, Some('1'), english).1,
@@ -54,6 +54,14 @@ fn english_candidates_select_current_page_and_preserve_trailing_space() {
         key(&mut router, 13, None, english).1.as_deref(),
         Some("hel9")
     );
+}
+#[test]
+fn chinese_minus_equals_fall_back_to_characters_at_page_edges() {
+    let normal = KeyModifiers::default();
+    let mut router = router(4);
+    compose(&mut router, "qq", normal);
+    key(&mut router, 0x2d, Some('-'), normal);
+    assert_eq!(router.engine.composition().text(), "qq-");
 }
 #[test]
 fn keypad_punctuation_is_half_width_and_regular_punctuation_is_full_width() {

@@ -26,7 +26,7 @@ The smaller, lighter column to the right of the candidates is the gloss; see [Gl
 | Commit the highlighted candidate | `Space` |
 | Commit candidate N | Number keys `1` to `9` |
 | Commit the pinyin letters as typed | `Enter` |
-| Page | `[` `]`, or `PageUp` / `PageDown` |
+| Page | `-` `=`, or `PageUp` / `PageDown` |
 | Move the highlight | `↑` / `↓` |
 | Delete a letter (if words are already picked in front, undo the last pick first) | `Backspace` |
 | Clear | `Esc` |

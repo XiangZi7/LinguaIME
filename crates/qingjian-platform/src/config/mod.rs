@@ -256,9 +256,9 @@ pub const TEMPLATE: &str = concat!(
 learning_language = "en"
 # 每页候选数（1–9）
 page_size = 9
-# 翻页键对：前一个上一页、后一个下一页。可选 "[]"、",." 或 "-="
-# 选 ",." 时组句中逗号句号用于翻页而不是上屏加标点；选 "-=" 时中文组句中的 - 用于翻页，不再进入英文直输段
-page_keys = "[]"
+# 翻页键对：前一个上一页、后一个下一页。可选 "-="、"[]" 或 ",."
+# 缺省 "-="：没有上一页 / 下一页时 - = 照旧进入英文直输段；选 ",." 时组句中逗号句号用于翻页而不是上屏加标点
+page_keys = "-="
 # 候选窗口外观：system 跟随系统 / light 浅色 / dark 深色
 appearance = "system"
 # 候选窗口主题（主题 id）：qingjian 青简绿 / system-blue 系统蓝 / wechat 微信绿 / sujian 素笺 / sakura 樱花 / dafeiyu 大肥鱼 / miku 初音未来 / bocchi 波奇酱。只对青简渲染器生效

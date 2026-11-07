@@ -37,17 +37,19 @@ fn english_candidate_limits_are_sanitized() {
 fn page_size_and_keys_are_sanitized() {
     let mut general = GeneralConfig::default();
     assert_eq!(general.page_size(), 9);
-    assert_eq!(general.page_keys(), ('[', ']'));
+    assert_eq!(general.page_keys(), ('-', '='));
     general.page_size = 0;
     general.page_keys = ",.".to_owned();
     assert_eq!(general.page_size(), 1);
     assert_eq!(general.page_keys(), (',', '.'));
+    general.page_keys = "[]".to_owned();
+    assert_eq!(general.page_keys(), ('[', ']'));
     general.page_size = 42;
     general.page_keys = "ab".to_owned();
     assert_eq!(general.page_size(), 9);
-    assert_eq!(general.page_keys(), ('[', ']'));
+    assert_eq!(general.page_keys(), ('-', '='));
     general.page_keys = ",,".to_owned();
-    assert_eq!(general.page_keys(), ('[', ']'));
+    assert_eq!(general.page_keys(), ('-', '='));
 }
 
 /// 组句中标点先上屏候选缺省关（`[general] punct_commits`），保持标点进英文直输段的老行为。
@@ -75,7 +77,7 @@ fn aux_code_key_falls_back_to_the_default() {
     assert!(!general.aux_code_show);
     general.aux_code_key = "/".to_owned();
     assert_eq!(general.aux_code_key(), '/');
-    for bad in ["", "ab", "a", "1", "[", "中"] {
+    for bad in ["", "ab", "a", "1", "-", "=", "中"] {
         general.aux_code_key = bad.to_owned();
         assert_eq!(general.aux_code_key(), ';', "{bad}");
     }

@@ -12,15 +12,16 @@ use crate::code_schemes::{self, WUBI86};
 pub const MAX_PAGE_SIZE: usize = 9;
 
 /// 翻页键对的可选值，第一项是缺省：第一个键向前、第二个向后。
-/// 缺省不用 `,` `.`：组句中敲逗号句号应该把首选上屏再补一个全角标点（`nihao,zaima` 一气打完），
-/// 拿它们翻页就得先按空格再敲标点。选 `-` `=` 时组句中的 `-` 是翻页，不再进英文直输段（#43）。
-pub const PAGE_KEY_OPTIONS: [&str; 3] = ["[]", ",.", "-="];
+/// 缺省用 `-` `=`：手不用离开主键区，没有上一页 / 下一页时 `-` `=` 落回原字符（`well-known` 照常进英文直输段）。
+/// 不用 `,` `.`：组句中敲逗号句号应该把首选上屏再补一个全角标点（`nihao,zaima` 一气打完），
+/// 拿它们翻页就得先按空格再敲标点。
+pub const PAGE_KEY_OPTIONS: [&str; 3] = ["-=", "[]", ",."];
 
 /// 内置主题的 id。`system` / `light` / `dark` 是外观的写法，不能当主题 id（旧配置里 `theme` 写的是它们）。
 pub const DEFAULT_THEME: &str = "qingjian";
 
 /// 缺省翻页键对，与 [`PAGE_KEY_OPTIONS`] 第一项一致。
-pub const DEFAULT_PAGE_KEYS: (char, char) = ('[', ']');
+pub const DEFAULT_PAGE_KEYS: (char, char) = ('-', '=');
 
 /// 键位提示窗口缺省的不透明度（百分比）。
 pub const DEFAULT_KEY_HINT_OPACITY: u8 = 85;

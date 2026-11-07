@@ -382,6 +382,7 @@ fn chinese_minus_equals_fall_back_to_characters_at_page_edges() {
     assert_eq!(r.engine.composition().text(), "qq=");
 
     let mut r = router(4);
+    r.config.page_keys = ('[', ']');
     compose(&mut r, "qq", normal);
     let result = key(&mut r, 0xDB, Some('['), normal);
     assert_eq!(

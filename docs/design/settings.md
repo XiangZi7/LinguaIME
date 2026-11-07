@@ -133,7 +133,7 @@ macOS 的切换键是 Caps Lock，由系统决定，所以不显示「切换键�
 
 | 标题 | 控件 | 配置 |
 |---|---|---|
-| 翻页键 | 分段：[ ] / , . / - = | `general.page_keys` |
+| 翻页键 | 分段：- = / [ ] / , . | `general.page_keys` |
 | 表达式 | 分段：v / u / i | `shortcut.expression` |
 | 问字 | 分段：v / u / i | `shortcut.question` |
 | ? 也进问字 | 开关 | `shortcut.question_mark` |

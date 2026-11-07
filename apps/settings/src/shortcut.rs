@@ -438,7 +438,7 @@ mod tests {
         );
         assert!(
             Shortcut::AuxCodeKey
-                .accept(&press("[", Held::default()), &config)
+                .accept(&press("-", Held::default()), &config)
                 .is_err()
         );
         assert!(
@@ -477,7 +477,7 @@ mod tests {
         for bad in [
             press("a", Held::default()),
             press("1", Held::default()),
-            press("[", Held::default()),
+            press("-", Held::default()),
             KeyPress::new(KeyCode::Tab, Held::default()),
             KeyPress::new(KeyCode::Space, alt()),
         ] {

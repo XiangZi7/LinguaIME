@@ -47,7 +47,7 @@ All settings are kept in one TOML text file, `config.toml`, with a note for ever
 | `[general] shift_letter` | 中英文 → Shift + 字母 (Chinese/English → Shift + letter) | `passthrough` (to the app, default) or `compose` (join the input) |
 | `[general] punct_commits` | 中英文 → 标点先上屏候选 (Chinese/English → Punctuation commits the candidate first) | `true` / `false` |
 | `[general] preedit` | 外观 → 拼音显示位置 (Appearance → Pinyin position) | `both`, `inline`, `window` |
-| `[general] page_keys` | 快捷键 → 翻页键 (Shortcuts → Paging keys) | `"[]"`, `",."`, `"-="` |
+| `[general] page_keys` | 快捷键 → 翻页键 (Shortcuts → Paging keys) | `"-="`, `"[]"`, `",."` |
 | `[shortcut] extra_page_keys` | 快捷键 → 额外翻页键 (Shortcuts → Extra paging keys) | A list, such as `["[]", ",.", "-="]`; empty by default |
 | `[shortcut] highlight_keys` | 快捷键 → 高亮移动键 (Shortcuts → Highlight keys) | Up/down or left/right |
 | `[shortcut] toggle_punctuation` | 快捷键 → Ctrl + . 切换全半角标点 (Shortcuts → Ctrl + . switches punctuation width) | An empty string turns it off, `"ctrl+."` is Ctrl + full stop; modifiers plus a letter, digit or full stop also work, such as `"ctrl+shift+."` |

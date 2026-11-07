@@ -16,6 +16,8 @@ When you pick a stretch of pinyin in several steps, the words picked first stay 
 Typing only each character's initial works too: `jttqhh` gives 今天天气很好.
 Abbreviations of two or three letters are usually still treated as words (`sj` gives 时间); type a few more syllables when you want a sentence.
 
+When you type only initials, Chinese comes first: with two letters (`wm`, `mm`) the Chinese word is first and the English word follows; once you pick that English word it goes back to first. With three or more letters, a complete English word (`npm`, `css`) still comes first, but the beginning of an English word (`wsm`) no longer does. Candidates then keep just one emoji and no kaomoji, leaving room for words.
+
 ## Spelling correction
 
 - **When the pinyin doesn't spell anything valid** (an extra letter, a missing letter, two keys swapped, one wrong letter): `nihooma` → 你好吗, `woxiagnqu` → 我想去, `mingtain` → 明天.
