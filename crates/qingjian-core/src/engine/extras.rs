@@ -141,8 +141,9 @@ impl Engine {
     /// 中英混输：整段输入是英文词就把它加进候选。
     /// 缺省作为拼音「不像话」（切不动、或除末尾外还有声母缩写 / 残缺音节）时排第一，否则排第二；
     /// 开了中文优先（`chinese_first`）整句 / 首个中文候选已经在前，英文词排第二。没有中文候选时总在第一。
-    /// 两字母的全大写缩写（`mp` → MP、`bm` → BM）是个例外：整段太短、几乎总是在打中文（门票 / 编码），
-    /// 这种让中文先；超过两个字母的正文英文（cargo / rust）照旧——按词频一刀切会把它们一起挤掉。
+    /// 两字母的全大写缩写（`mp` → MP、`bm` → BM）与两字母的纯声母（`wm` → Wm、`mm` → mm）是个例外：
+    /// 整段太短、几乎总是在打中文（门票 / 我们），这种让中文先；超过两个字母的正文英文（cargo / rust）
+    /// 照旧——按词频一刀切会把它们一起挤掉。纯声母只靠补全猜出来的词（`wsm` → WSMan）也不排第一，`npm` 这样的精确词照旧。
     /// 例外只管**没选过**的英文词：用户选过的照旧排第一（选过 OK，下次敲 `ok` 还是 OK 在前）。
     pub(super) fn insert_english(&self, items: &mut Vec<Candidate>, unlikely_pinyin: bool) {
         if !self.english_in_chinese {
@@ -178,11 +179,15 @@ impl Engine {
         // 但**不压过学习记录**：`ok` / `pc` / `ll` 同样满足「两个字母的全大写缩写」，一刀切会把它们一起
         // 翻成中文；而且选过 OK 的用户下次敲 `ok` 本该还是它排第一。所以这条只对用户**没选过**的英文词生效
         //（`record` 对英文候选也记次数，所以 `english_weight` 就是「选过没有」）。
+        let initials = all_initials(text);
         let short_acronym = english_weight == 0
             && text.len() <= 2
-            && word.is_some_and(|word| word.chars().all(|c| c.is_ascii_uppercase()));
-        let english_first =
-            !self.chinese_first && unlikely_pinyin && chosen <= english_weight && !short_acronym;
+            && word.is_some_and(|word| initials || word.chars().all(|c| c.is_ascii_uppercase()));
+        let english_first = !self.chinese_first
+            && unlikely_pinyin
+            && chosen <= english_weight
+            && !short_acronym
+            && (word.is_some() || !initials);
         let mut position = if items.is_empty() || english_first {
             0
         } else {
@@ -262,17 +267,23 @@ impl Engine {
 
     /// emoji、颜文字、符号候选：前几个中文候选里有配的，紧跟在那个词后面，右侧标注它对应的词。
     /// 同一个词后面按 emoji、颜文字、符号的顺序排，三样各有各的名额；前面已经有的（CLDR 也配了的符号）不重复出。
+    /// 纯声母的简拼（`xx`）一段对得上一串常用词，要找的词常在后面几格：emoji 只留一个、颜文字不插，把位置让给词；符号照旧（`ydy` → ≈）。
     pub(super) fn insert_emoji(&self, items: &mut Vec<Candidate>) {
+        let initials = all_initials(self.composition.scope());
         if let Some(table) = self.emoji.as_ref() {
             insert_following(
                 items,
                 table,
                 CandidateKind::Emoji,
                 EMOJI_PER_WORD,
-                self.emoji_limit,
+                if initials {
+                    self.emoji_limit.min(1)
+                } else {
+                    self.emoji_limit
+                },
             );
         }
-        if let Some(table) = self.kaomoji {
+        if let Some(table) = self.kaomoji.filter(|_| !initials) {
             insert_following(
                 items,
                 table,
@@ -291,6 +302,15 @@ impl Engine {
             );
         }
     }
+}
+
+/// 整段都是辅音字母（`wm`、`xhs`）：打拼音时只有简拼才这样，英文里也多半是缩写或单位。
+fn all_initials(text: &str) -> bool {
+    !text.is_empty()
+        && text.chars().all(|c| {
+            c.is_ascii_alphabetic()
+                && !matches!(c.to_ascii_lowercase(), 'a' | 'e' | 'i' | 'o' | 'u')
+        })
 }
 
 /// 给前 [`EMOJI_SCAN`] 个词配 `table` 里的条目，插在词（以及紧挨着它的英文词、已经配上的条目）后面。

@@ -108,6 +108,43 @@ fn emoji_follow_their_word_and_consume_its_syllables() {
     assert_eq!(engine.composition().text(), "zhe");
 }
 
+/// 纯声母的简拼（`xx`）：emoji 只留一个、颜文字不插，后面的词不被挤到下一页；打全拼照旧。
+#[test]
+fn bare_initials_keep_one_emoji_and_no_kaomoji() {
+    let dictionary = Dictionary::parse(
+        "谢谢	xie xie	9000
+学校	xue xiao	5000
+",
+    )
+    .unwrap();
+    let table = EmojiTable::parse(
+        "谢谢	🙏
+谢谢	🙇
+学校	🏫
+",
+    )
+    .unwrap();
+    let mut engine = Engine::new(dictionary).with_emoji(table);
+    let kinds = |engine: &mut Engine, input: &str| -> Vec<CandidateKind> {
+        engine.set_input(input);
+        engine
+            .query()
+            .unwrap()
+            .candidates
+            .items
+            .iter()
+            .map(|c| c.kind)
+            .collect()
+    };
+    let abbreviated = kinds(&mut engine, "xx");
+    let count = |kinds: &[CandidateKind], kind| kinds.iter().filter(|k| **k == kind).count();
+    assert_eq!(count(&abbreviated, CandidateKind::Emoji), 1);
+    assert_eq!(count(&abbreviated, CandidateKind::Kaomoji), 0);
+    let full = kinds(&mut engine, "xiexie");
+    assert_eq!(count(&full, CandidateKind::Emoji), 2);
+    assert_eq!(count(&full, CandidateKind::Kaomoji), 1);
+}
+
 #[test]
 fn kaomoji_and_symbols_follow_the_emoji_of_their_word_with_their_own_limits() {
     let dictionary = Dictionary::parse("约等于\tyue deng yu\t100\n哭\tku\t100\n").unwrap();

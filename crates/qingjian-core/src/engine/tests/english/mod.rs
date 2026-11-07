@@ -166,6 +166,62 @@ fn short_all_caps_acronym_yields_to_chinese() {
 }
 
 #[test]
+fn bare_initials_yield_to_chinese_unless_the_word_is_exact_or_learned() {
+    // `wm` / `mm` 不是全大写缩写，但两个辅音字母几乎总是简拼：让中文先（`y` `w` 也算辅音，`my` 同样让给 没有）。
+    let dictionary = Dictionary::parse(
+        "我们	wo men	9000
+慢慢	man man	5000
+为什么	wei shen me	8000
+         你没	ni mei	3000
+买鱼	mai yu	3000
+马	ma	3000
+",
+    )
+    .unwrap();
+    let words = WordList::parse(
+        "Wm	wm	3000
+mm	mm	3000
+WSMan	wsman	2000
+npm	npm	4000
+",
+    )
+    .unwrap();
+    let mut engine = Engine::new(dictionary)
+        .with_english(words)
+        .with_learner(Box::new(CountingLearner(HashMap::new())));
+
+    engine.set_input("wm");
+    let all = texts_of(&engine);
+    assert_eq!(all[0], "我们");
+    assert!(all.iter().any(|t| t == "Wm"), "英文词仍在候选里");
+    engine.set_input("mm");
+    assert_eq!(texts_of(&engine)[0], "慢慢");
+
+    // 三个字母：补全猜出来的词不抢第一，但仍在候选里
+    engine.set_input("wsm");
+    let all = texts_of(&engine);
+    assert_eq!(all[0], "为什么");
+    assert!(all.iter().any(|t| t == "WSMan"), "补全仍在候选里");
+    // 精确的英文词照旧
+    engine.set_input("npm");
+    assert_eq!(texts_of(&engine)[0], "npm");
+
+    // 选过之后听用户的
+    engine.set_input("wm");
+    let candidate = engine
+        .query()
+        .unwrap()
+        .candidates
+        .items
+        .into_iter()
+        .find(|c| c.text == "Wm")
+        .unwrap();
+    engine.commit(&candidate);
+    engine.set_input("wm");
+    assert_eq!(texts_of(&engine)[0], "Wm");
+}
+
+#[test]
 fn learned_english_word_keeps_first_place_over_the_two_letter_acronym_rule() {
     // `ok` / `pc` / `ll` 同样满足「两个字母的全大写缩写」，一刀切会把它们一起翻成中文；
     // 而用户**选过**的英文词要照旧排第一 —— 选过 OK，下次敲 `ok` 就该还是 OK 在前。
